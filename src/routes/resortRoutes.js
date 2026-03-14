@@ -7,8 +7,19 @@ const {
   deleteResort,
 } = require('../controllers/resortController');
 const { authMiddleware, propertyOwnerMiddleware, permissionMiddleware } = require('../middleware/auth');
+const { check } = require('express-validator');
+const { validate } = require('../middleware/validate');
 
 const router = express.Router();
+
+const resortValidation = [
+  check('name', 'Name is required').not().isEmpty(),
+  check('description', 'Description is required').not().isEmpty(),
+  check('location', 'Location is required').not().isEmpty(),
+  check('pricePerNight', 'Price per night must be a number').isNumeric(),
+  check('maxGuests', 'Max guests must be a number').isNumeric(),
+  check('rooms', 'Rooms must be a number').isNumeric(),
+];
 
 /**
  * @swagger
@@ -52,7 +63,7 @@ router.get('/:id', getResortById);
  *       201:
  *         description: Resort created successfully
  */
-router.post('/', authMiddleware, propertyOwnerMiddleware, permissionMiddleware('create_resort'), createResort);
+router.post('/', authMiddleware, propertyOwnerMiddleware, permissionMiddleware('create_resort'), resortValidation, validate, createResort);
 
 /**
  * @swagger
@@ -72,7 +83,7 @@ router.post('/', authMiddleware, propertyOwnerMiddleware, permissionMiddleware('
  *       200:
  *         description: Resort updated successfully
  */
-router.put('/:id', authMiddleware, propertyOwnerMiddleware, permissionMiddleware('update_resort'), updateResort);
+router.put('/:id', authMiddleware, propertyOwnerMiddleware, permissionMiddleware('update_resort'), resortValidation, validate, updateResort);
 
 /**
  * @swagger

@@ -24,12 +24,20 @@ const formatResort = (resort) => {
 
 exports.getAllResorts = async (req, res) => {
   try {
-    const { amenities, minRate, maxRate, location } = req.query;
+    const { amenities, minRate, maxRate, location, search, sort } = req.query;
 
     const filter = { isActive: true };
 
     if (location) {
       filter.location = { $regex: location, $options: 'i' };
+    }
+
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { location: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ];
     }
 
     if (amenities) {
@@ -57,10 +65,34 @@ exports.getAllResorts = async (req, res) => {
       if (Object.keys(priceFilter).length) filter.pricePerNight = priceFilter;
     }
 
-    const resorts = await Resort.find(filter);
+    // Sorting
+    let sortQuery = { createdAt: -1 }; // Default
+    if (sort) {
+      const sortFields = sort.split(',');
+      sortQuery = {};
+      sortFields.forEach((field) => {
+        const order = field.startsWith('-') ? -1 : 1;
+        const fieldName = field.startsWith('-') ? field.substring(1) : field;
+        sortQuery[fieldName] = order;
+      });
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const resorts = await Resort.find(filter).sort(sortQuery).skip(skip).limit(limit);
+    const total = await Resort.countDocuments(filter);
     const formattedResorts = resorts.map(formatResort);
 
-    res.json({ message: 'Resorts fetched successfully', count: formattedResorts.length, data: formattedResorts });
+    res.json({
+      message: 'Resorts fetched successfully',
+      count: formattedResorts.length,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      data: formattedResorts,
+    });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch resorts', error: error.message });
   }

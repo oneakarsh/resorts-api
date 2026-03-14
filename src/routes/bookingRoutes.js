@@ -8,8 +8,17 @@ const {
   getAllBookings,
 } = require('../controllers/bookingController');
 const { authMiddleware, propertyOwnerMiddleware, permissionMiddleware } = require('../middleware/auth');
+const { check } = require('express-validator');
+const { validate } = require('../middleware/validate');
 
 const router = express.Router();
+
+const bookingValidation = [
+  check('resortId', 'Resort ID is required').not().isEmpty(),
+  check('checkInDate', 'Check-in date is required').isISO8601(),
+  check('checkOutDate', 'Check-out date is required').isISO8601(),
+  check('numberOfGuests', 'Number of guests must be a number').isNumeric(),
+];
 
 /**
  * @swagger
@@ -47,7 +56,7 @@ const router = express.Router();
  *       201:
  *         description: Booking created successfully
  */
-router.post('/', authMiddleware, permissionMiddleware('create_booking'), createBooking);
+router.post('/', authMiddleware, permissionMiddleware('create_booking'), bookingValidation, validate, createBooking);
 
 /**
  * @swagger

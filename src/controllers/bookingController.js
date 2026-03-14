@@ -55,6 +55,24 @@ exports.createBooking = async (req, res) => {
 
     const totalPrice = nights * resort.pricePerNight;
 
+    // Check for overlapping bookings to ensure room availability
+    const overlappingBookingsCount = await Booking.countDocuments({
+      resortId,
+      status: { $in: ['pending', 'confirmed'] },
+      $or: [
+        {
+          checkInDate: { $lt: checkOut },
+          checkOutDate: { $gt: checkIn },
+        },
+      ],
+    });
+
+    if (overlappingBookingsCount >= resort.rooms) {
+      return res.status(400).json({
+        message: 'No rooms available for the selected dates. Please try different dates.',
+      });
+    }
+
     const booking = new Booking({
       userId: req.userId,
       resortId,
@@ -75,9 +93,27 @@ exports.createBooking = async (req, res) => {
 
 exports.getUserBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find({ userId: req.userId }).populate('resortId');
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const bookings = await Booking.find({ userId: req.userId })
+      .populate('resortId')
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const total = await Booking.countDocuments({ userId: req.userId });
     const formattedBookings = bookings.map(formatBooking);
-    res.json({ message: 'Bookings fetched successfully', data: formattedBookings });
+
+    res.json({
+      message: 'Bookings fetched successfully',
+      count: formattedBookings.length,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      data: formattedBookings,
+    });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch bookings', error: error.message });
   }
@@ -115,15 +151,19 @@ exports.updateBookingStatus = async (req, res) => {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
-    const booking = await Booking.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    ).populate('resortId');
+    const booking = await Booking.findById(req.params.id).populate('resortId');
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
+
+    // Ownership check for property owners
+    if (req.userRole === 'property_owner' && booking.resortId.owner.toString() !== req.userId) {
+      return res.status(403).json({ message: 'You can only update bookings for your own resorts' });
+    }
+
+    booking.status = status;
+    await booking.save();
 
     res.json({ message: 'Booking status updated', data: formatBooking(booking) });
   } catch (error) {
@@ -159,9 +199,28 @@ exports.cancelBooking = async (req, res) => {
 
 exports.getAllBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find().populate('userId').populate('resortId');
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const bookings = await Booking.find()
+      .populate('userId')
+      .populate('resortId')
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const total = await Booking.countDocuments();
     const formattedBookings = bookings.map(formatBooking);
-    res.json({ message: 'All bookings fetched', count: formattedBookings.length, data: formattedBookings });
+
+    res.json({
+      message: 'All bookings fetched',
+      count: formattedBookings.length,
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      data: formattedBookings,
+    });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch bookings', error: error.message });
   }

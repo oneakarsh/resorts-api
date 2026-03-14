@@ -1,5 +1,25 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+
+const generateTokens = async (user) => {
+  const accessToken = jwt.sign(
+    { userId: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: '15m' } // Shorter access token
+  );
+
+  const refreshToken = jwt.sign(
+    { userId: user._id },
+    process.env.JWT_REFRESH_SECRET || 'refresh_secret_key',
+    { expiresIn: '7d' }
+  );
+
+  user.refreshToken = refreshToken;
+  await user.save();
+
+  return { accessToken, refreshToken };
+};
 
 exports.register = async (req, res) => {
   try {
@@ -10,23 +30,6 @@ exports.register = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Missing required fields: name, email, password, confirmPassword',
-      });
-    }
-
-    // Validate email format
-    const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid email format',
-      });
-    }
-
-    // Validate password strength
-    if (password.length < 6 || password !== confirmPassword) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password must be at least 6 characters long and match the confirmation password',
       });
     }
 
@@ -43,17 +46,13 @@ exports.register = async (req, res) => {
     const user = new User({ name, email, password, confirmPassword, phone, role });
     await user.save();
 
-    // Generate token
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    const { accessToken, refreshToken } = await generateTokens(user);
 
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
-      token,
+      token: accessToken,
+      refreshToken,
       user: {
         id: user._id,
         name: user.name,
@@ -63,12 +62,6 @@ exports.register = async (req, res) => {
     });
   } catch (error) {
     console.error('Registration error:', error);
-    if (error.code === 11000) {
-      return res.status(409).json({
-        success: false,
-        message: 'Email already exists',
-      });
-    }
     res.status(500).json({
       success: false,
       message: 'Registration failed',
@@ -88,8 +81,8 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Find user with password field included
-    const user = await User.findOne({ email }).select('+password');
+    // Find user with password and refreshToken fields included
+    const user = await User.findOne({ email }).select('+password +refreshToken');
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -114,17 +107,13 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Generate token
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    const { accessToken, refreshToken } = await generateTokens(user);
 
     res.json({
       success: true,
       message: 'Login successful',
-      token,
+      token: accessToken,
+      refreshToken,
       user: {
         id: user._id,
         name: user.name,
@@ -139,6 +128,96 @@ exports.login = async (req, res) => {
       message: 'Login failed',
       error: error.message,
     });
+  }
+};
+
+exports.refreshToken = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'Refresh token is required' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET || 'refresh_secret_key');
+    const user = await User.findById(decoded.userId).select('+refreshToken');
+
+    if (!user || user.refreshToken !== token) {
+      return res.status(403).json({ success: false, message: 'Invalid refresh token' });
+    }
+
+    const { accessToken, refreshToken: newRefreshToken } = await generateTokens(user);
+
+    res.json({
+      success: true,
+      token: accessToken,
+      refreshToken: newRefreshToken,
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(403).json({ success: false, message: 'Invalid or expired refresh token' });
+  }
+};
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(20).toString('hex');
+
+    // Hash token and set to field
+    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+    // Set expire (10 minutes)
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+
+    await user.save();
+
+    // In a real app, send the email here. For this audit demo, we return the token
+    res.json({
+      success: true,
+      message: 'Password reset link generated (sent to email in prod)',
+      resetToken: resetToken, // Returning for testing purposes
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ success: false, message: 'Failed to process request' });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired reset token' });
+    }
+
+    // Set new password
+    user.password = password;
+    user.confirmPassword = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save();
+
+    res.json({ success: true, message: 'Password reset successful' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ success: false, message: 'Failed to reset password' });
   }
 };
 

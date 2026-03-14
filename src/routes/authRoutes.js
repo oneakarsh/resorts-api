@@ -1,8 +1,33 @@
 const express = require('express');
-const { register, login, getProfile, createPropertyOwner, createManager, getAllUsers } = require('../controllers/authController');
+const {
+  register,
+  login,
+  getProfile,
+  createPropertyOwner,
+  createManager,
+  getAllUsers,
+  refreshToken,
+  forgotPassword,
+  resetPassword,
+} = require('../controllers/authController');
 const { authMiddleware, superadminMiddleware, permissionMiddleware } = require('../middleware/auth');
 
+const { check } = require('express-validator');
+const { validate } = require('../middleware/validate');
+
 const router = express.Router();
+
+const registerValidation = [
+  check('name', 'Name is required').not().isEmpty(),
+  check('email', 'Please include a valid email').isEmail(),
+  check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 }),
+  check('confirmPassword', 'Passwords do not match').custom((value, { req }) => value === req.body.password),
+];
+
+const loginValidation = [
+  check('email', 'Please include a valid email').isEmail(),
+  check('password', 'Password is required').exists(),
+];
 
 /**
  * @swagger
@@ -38,7 +63,7 @@ const router = express.Router();
  *       400:
  *         description: Bad request
  */
-router.post('/register', register);
+router.post('/register', registerValidation, validate, register);
 
 /**
  * @swagger
@@ -66,7 +91,84 @@ router.post('/register', register);
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', login);
+router.post('/login', loginValidation, validate, login);
+
+/**
+ * @swagger
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: New access token generated
+ *       403:
+ *         description: Invalid refresh token
+ */
+router.post('/refresh', refreshToken);
+
+/**
+ * @swagger
+ * /api/auth/forgot-password:
+ *   post:
+ *     summary: Request password reset link
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Reset link generated
+ */
+router.post('/forgot-password', forgotPassword);
+
+/**
+ * @swagger
+ * /api/auth/reset-password/{token}:
+ *   post:
+ *     summary: Reset password using token
+ *     tags: [Auth]
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ */
+router.post('/reset-password/:token', resetPassword);
 
 /**
  * @swagger
