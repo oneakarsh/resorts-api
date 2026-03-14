@@ -7,8 +7,14 @@ const resortRoutes = require('./src/routes/resortRoutes');
 const bookingRoutes = require('./src/routes/bookingRoutes');
 const userRoutes = require('./src/routes/userRoutes');
 const chatRoutes = require('./src/routes/chatRoutes');
+const dashboardRoutes = require('./src/routes/dashboardRoutes');
+
+const { swaggerUi, specs } = require('./src/config/swagger');
 
 const app = express();
+
+// Swagger Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // Connect to MongoDB
 connectDB();
@@ -22,6 +28,7 @@ app.use('/api/resorts', resortRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

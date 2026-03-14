@@ -11,11 +11,142 @@ const { authMiddleware, propertyOwnerMiddleware, permissionMiddleware } = requir
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /api/bookings:
+ *   post:
+ *     summary: Create a new booking
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - resortId
+ *               - checkInDate
+ *               - checkOutDate
+ *               - numberOfGuests
+ *             properties:
+ *               resortId:
+ *                 type: string
+ *               checkInDate:
+ *                 type: string
+ *                 format: date
+ *               checkOutDate:
+ *                 type: string
+ *                 format: date
+ *               numberOfGuests:
+ *                 type: integer
+ *               specialRequests:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Booking created successfully
+ */
 router.post('/', authMiddleware, permissionMiddleware('create_booking'), createBooking);
+
+/**
+ * @swagger
+ * /api/bookings:
+ *   get:
+ *     summary: Get user bookings
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of user bookings retrieved successfully
+ */
 router.get('/', authMiddleware, permissionMiddleware('view_own_booking'), getUserBookings);
+
+/**
+ * @swagger
+ * /api/bookings/property-owner/all:
+ *   get:
+ *     summary: Get all bookings for property owner's resorts
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of all bookings retrieved successfully
+ */
 router.get('/property-owner/all', authMiddleware, propertyOwnerMiddleware, permissionMiddleware('view_all_bookings'), getAllBookings);
+
+/**
+ * @swagger
+ * /api/bookings/{id}:
+ *   get:
+ *     summary: Get booking by ID
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Booking details retrieved successfully
+ */
 router.get('/:id', authMiddleware, getBookingById);
+
+/**
+ * @swagger
+ * /api/bookings/{id}/status:
+ *   patch:
+ *     summary: Update booking status (Property Owner/Super Admin only)
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [pending, confirmed, cancelled, completed]
+ *     responses:
+ *       200:
+ *         description: Booking status updated successfully
+ */
 router.patch('/:id/status', authMiddleware, propertyOwnerMiddleware, permissionMiddleware('update_booking_status'), updateBookingStatus);
+
+/**
+ * @swagger
+ * /api/bookings/{id}/cancel:
+ *   patch:
+ *     summary: Cancel a booking
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Booking cancelled successfully
+ */
 router.patch('/:id/cancel', authMiddleware, permissionMiddleware('cancel_own_booking'), cancelBooking);
 
 module.exports = router;

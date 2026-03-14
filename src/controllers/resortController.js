@@ -98,6 +98,7 @@ exports.createResort = async (req, res) => {
       maxGuests,
       rooms,
       image,
+      owner: req.userId,
     });
 
     await resort.save();

@@ -20,45 +20,62 @@ A complete Express.js API for a resort booking system with MongoDB integration, 
 - **Password Hashing**: bcryptjs
 - **Additional**: CORS, dotenv
 
-## Installation
+## Local Setup and Installation
 
-1. **Clone the repository**
-```bash
-cd c:\Users\akarsh.ramesh\Scape
-```
+Follow these steps to get the API running on your local machine:
 
-2. **Install dependencies**
+### 1. Prerequisites
+- **Node.js** (v14 or higher recommended)
+- **MongoDB** (Ensure it's installed and running locally)
+- **Git**
+
+### 2. Clone and Install
 ```bash
+git clone <repository-url>
+cd resorts-api
 npm install
 ```
 
-3. **Create .env file**
+### 3. Environment Configuration
+Create a `.env` file in the root directory. You can copy the example:
 ```bash
-Copy .env.example to .env and update values:
-MONGODB_URI=mongodb://localhost:27017/resort-booking
-PORT=5000
-JWT_SECRET=your_jwt_secret_key_here_change_in_production
-NODE_ENV=development
+cp .env.example .env
 ```
+Ensure the `MONGODB_URI` matches your local MongoDB instance (default is usually `mongodb://localhost:27017/resort-booking`).
 
-4. **Start MongoDB**
+### 4. Running the Server
+
+**Development Mode** (Recommended for local work):
 ```bash
-# If using local MongoDB
-mongod
-
-# Or update MONGODB_URI to your cloud MongoDB instance (e.g., MongoDB Atlas)
-```
-
-5. **Run the server**
-```bash
-# Development mode (with auto-reload)
 npm run dev
+```
+The server uses `nodemon` to watch for file changes.
 
-# Production mode
+**Production Mode**:
+```bash
 npm start
 ```
 
-Server will be running at `http://localhost:5000`
+Once started, the API will be available at: `http://localhost:5001`
+Check the health status at: `http://localhost:5001/api/health`
+
+### 5. API Documentation
+The API is fully documented using Swagger. Once the server is running, you can access the interactive documentation at:
+**`http://localhost:5001/api-docs`**
+
+### 6. Admin & Dashboard Features
+The system includes specialized dashboard APIs for different roles:
+- **Super Admin Dashboard**: `GET /api/dashboard/super-admin` - Comprehensive stats for the entire platform.
+- **Property Owner Dashboard**: `GET /api/dashboard/property-owner` - Performance stats for resorts owned by the user.
+
+### 7. Seeding Data
+To populate the database with a Super Admin, Property Owner, and sample resorts for testing:
+```bash
+node seed.js
+```
+**Default Credentials:**
+- Super Admin: `superadmin@resort.com` / `password123`
+- Property Owner: `owner@resort.com` / `password123`
 
 ## API Endpoints
 
