@@ -154,7 +154,15 @@ exports.getProfile = async (req, res) => {
 
     res.json({
       success: true,
-      user,
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+        },
+      },
     });
   } catch (error) {
     console.error('Profile fetch error:', error);
@@ -166,7 +174,7 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-exports.createAdmin = async (req, res) => {
+exports.createPropertyOwner = async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
 
@@ -185,32 +193,83 @@ exports.createAdmin = async (req, res) => {
       });
     }
 
-    const admin = new User({
+    const owner = new User({
       name,
       email,
       password,
       phone,
-      role: 'admin',
+      role: 'property_owner',
       createdBy: req.userId,
     });
 
-    await admin.save();
+    await owner.save();
 
     res.status(201).json({
       success: true,
-      message: 'Admin created successfully',
-      admin: {
-        id: admin._id,
-        name: admin.name,
-        email: admin.email,
-        role: admin.role,
+      message: 'Property owner created successfully',
+      owner: {
+        id: owner._id,
+        name: owner.name,
+        email: owner.email,
+        role: owner.role,
       },
     });
   } catch (error) {
-    console.error('Admin creation error:', error);
+    console.error('Property owner creation error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create admin',
+      message: 'Failed to create property owner',
+      error: error.message,
+    });
+  }
+};
+
+// Create a manager (SuperAdmin only) that can manage bookings and chat with customers
+exports.createManager = async (req, res) => {
+  try {
+    const { name, email, password, phone } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields',
+      });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: 'Email already registered',
+      });
+    }
+
+    const manager = new User({
+      name,
+      email,
+      password,
+      phone,
+      role: 'manager',
+      createdBy: req.userId,
+    });
+
+    await manager.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Manager created successfully',
+      manager: {
+        id: manager._id,
+        name: manager.name,
+        email: manager.email,
+        role: manager.role,
+      },
+    });
+  } catch (error) {
+    console.error('Manager creation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create manager',
       error: error.message,
     });
   }

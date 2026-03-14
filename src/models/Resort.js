@@ -15,6 +15,14 @@ const resortSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    latitude: {
+      type: Number,
+      default: 0,
+    },
+    longitude: {
+      type: Number,
+      default: 0,
+    },
     pricePerNight: {
       type: Number,
       required: true,

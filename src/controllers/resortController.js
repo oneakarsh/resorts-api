@@ -1,5 +1,27 @@
 const Resort = require('../models/Resort');
 
+// Helper function to format resort response
+const formatResort = (resort) => {
+  const resortObj = resort.toObject ? resort.toObject() : resort;
+  return {
+    id: resortObj._id,
+    _id: resortObj._id,
+    name: resortObj.name,
+    description: resortObj.description,
+    location: resortObj.location,
+    latitude: resortObj.latitude || 0,
+    longitude: resortObj.longitude || 0,
+    pricePerNight: resortObj.pricePerNight,
+    amenities: resortObj.amenities || [],
+    maxGuests: resortObj.maxGuests,
+    rooms: resortObj.rooms,
+    rating: resortObj.rating || 0,
+    image: resortObj.image,
+    isActive: resortObj.isActive,
+    createdAt: resortObj.createdAt,
+  };
+};
+
 exports.getAllResorts = async (req, res) => {
   try {
     const { amenities, minRate, maxRate, location } = req.query;
@@ -36,8 +58,9 @@ exports.getAllResorts = async (req, res) => {
     }
 
     const resorts = await Resort.find(filter);
+    const formattedResorts = resorts.map(formatResort);
 
-    res.json({ message: 'Resorts fetched successfully', count: resorts.length, data: resorts });
+    res.json({ message: 'Resorts fetched successfully', count: formattedResorts.length, data: formattedResorts });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch resorts', error: error.message });
   }
@@ -49,7 +72,7 @@ exports.getResortById = async (req, res) => {
     if (!resort) {
       return res.status(404).json({ message: 'Resort not found' });
     }
-    res.json({ data: resort });
+    res.json({ data: formatResort(resort) });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch resort', error: error.message });
   }
@@ -57,7 +80,7 @@ exports.getResortById = async (req, res) => {
 
 exports.createResort = async (req, res) => {
   try {
-    const { name, description, location, pricePerNight, amenities, maxGuests, rooms, image } =
+    const { name, description, location, latitude, longitude, pricePerNight, amenities, maxGuests, rooms, image } =
       req.body;
 
     if (!name || !description || !location || !pricePerNight || !maxGuests || !rooms) {
@@ -68,6 +91,8 @@ exports.createResort = async (req, res) => {
       name,
       description,
       location,
+      latitude: latitude || 0,
+      longitude: longitude || 0,
       pricePerNight,
       amenities,
       maxGuests,
@@ -76,7 +101,7 @@ exports.createResort = async (req, res) => {
     });
 
     await resort.save();
-    res.status(201).json({ message: 'Resort created successfully', data: resort });
+    res.status(201).json({ message: 'Resort created successfully', data: formatResort(resort) });
   } catch (error) {
     res.status(500).json({ message: 'Failed to create resort', error: error.message });
   }
@@ -93,7 +118,7 @@ exports.updateResort = async (req, res) => {
       return res.status(404).json({ message: 'Resort not found' });
     }
 
-    res.json({ message: 'Resort updated successfully', data: resort });
+    res.json({ message: 'Resort updated successfully', data: formatResort(resort) });
   } catch (error) {
     res.status(500).json({ message: 'Failed to update resort', error: error.message });
   }

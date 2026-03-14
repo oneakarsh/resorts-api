@@ -1,0 +1,203 @@
+{
+  "info": {
+    "name": "Resortor API - Postman Collection",
+    "_postman_id": "resortor-collection-001",
+    "description": "Collection for testing Resortor API endpoints (auth, resorts, bookings, chat). Use environment variable `base_url` and `token`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth - Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"confirmPassword\": \"password123\",\n  \"phone\": \"+10000000000\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/auth/register", "host": [ "{{base_url}}" ], "path": [ "api", "auth", "register" ] }
+      }
+    },
+    {
+      "name": "Auth - Login",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/auth/login", "host": [ "{{base_url}}" ], "path": [ "api", "auth", "login" ] }
+      }
+    },
+    {
+      "name": "Auth - Get Profile",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": { "raw": "{{base_url}}/api/auth/profile", "host": [ "{{base_url}}" ], "path": [ "api", "auth", "profile" ] }
+      }
+    },
+    {
+      "name": "Auth - Create Property Owner (SuperAdmin)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Property Owner\",\n  \"email\": \"owner@example.com\",\n  \"password\": \"ownerpass\",\n  \"phone\": \"+19999999999\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/auth/property-owner/create", "host": [ "{{base_url}}" ], "path": [ "api", "auth", "property-owner", "create" ] }
+      }
+    },
+    {
+      "name": "Auth - Create Manager (SuperAdmin)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Manager\",\n  \"email\": \"manager@example.com\",\n  \"password\": \"managerpass\",\n  \"phone\": \"+18888888888\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/auth/manager/create", "host": [ "{{base_url}}" ], "path": [ "api", "auth", "manager", "create" ] }
+      }
+    },
+    {
+      "name": "Resorts - Get All",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{base_url}}/api/resorts", "host": [ "{{base_url}}" ], "path": [ "api", "resorts" ] }
+      }
+    },
+    {
+      "name": "Resorts - Create Resort (Property Owner)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Ocean View Resort\",\n  \"description\": \"Beautiful seaside resort\",\n  \"location\": \"Beach City\",\n  \"pricePerNight\": 150,\n  \"amenities\": [\"Pool\", \"Spa\"],\n  \"maxGuests\": 4,\n  \"rooms\": 20\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/resorts", "host": [ "{{base_url}}" ], "path": [ "api", "resorts" ] }
+      }
+    },
+    {
+      "name": "Bookings - Create Booking (User)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"resortId\": \"<PUT_RESORT_ID_HERE>\",\n  \"checkInDate\": \"2026-03-01\",\n  \"checkOutDate\": \"2026-03-05\",\n  \"numberOfGuests\": 2,\n  \"specialRequests\": \"Late check-in\",\n  \"paymentMethod\": \"card\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/bookings", "host": [ "{{base_url}}" ], "path": [ "api", "bookings" ] }
+      }
+    },
+    {
+      "name": "Bookings - Get My Bookings (User)",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{base_url}}/api/bookings", "host": [ "{{base_url}}" ], "path": [ "api", "bookings" ] }
+      }
+    },
+    {
+      "name": "Bookings - Get Booking By ID",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{base_url}}/api/bookings/:id", "host": [ "{{base_url}}" ], "path": [ "api", "bookings", ":id" ] }
+      }
+    },
+    {
+      "name": "Bookings - Update Booking Status (Property Owner / Manager)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"confirmed\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/bookings/:id/status", "host": [ "{{base_url}}" ], "path": [ "api", "bookings", ":id", "status" ] }
+      }
+    },
+    {
+      "name": "Bookings - Cancel Booking (Owner or User)",
+      "request": {
+        "method": "PATCH",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{base_url}}/api/bookings/:id/cancel", "host": [ "{{base_url}}" ], "path": [ "api", "bookings", ":id", "cancel" ] }
+      }
+    },
+    {
+      "name": "Bookings - Get All Bookings (Property Owner)",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{base_url}}/api/bookings/property-owner/all", "host": [ "{{base_url}}" ], "path": [ "api", "bookings", "property-owner", "all" ] }
+      }
+    },
+    {
+      "name": "Chat - Send Message (Manager <-> Customer)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": \"<RECIPIENT_USER_ID>\",\n  \"bookingId\": \"<OPTIONAL_BOOKING_ID>\",\n  \"content\": \"Hello, I have a question about your booking.\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/api/chat/send", "host": [ "{{base_url}}" ], "path": [ "api", "chat", "send" ] }
+      }
+    },
+    {
+      "name": "Chat - Get Conversation",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{base_url}}/api/chat/conversations/:withUserId", "host": [ "{{base_url}}" ], "path": [ "api", "chat", "conversations", ":withUserId" ] }
+      }
+    },
+    {
+      "name": "Chat - Inbox",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": { "raw": "{{base_url}}/api/chat/inbox", "host": [ "{{base_url}}" ], "path": [ "api", "chat", "inbox" ] }
+      }
+    }
+  ]
+}

@@ -1,6 +1,25 @@
 const Booking = require('../models/Booking');
 const Resort = require('../models/Resort');
 
+// Helper function to format booking response
+const formatBooking = (booking) => {
+  const bookingObj = booking.toObject ? booking.toObject() : booking;
+  return {
+    id: bookingObj._id,
+    userId: bookingObj.userId._id || bookingObj.userId,
+    resortId: bookingObj.resortId._id || bookingObj.resortId,
+    resort: bookingObj.resortId, // For UI compatibility
+    checkInDate: bookingObj.checkInDate,
+    checkOutDate: bookingObj.checkOutDate,
+    numberOfGuests: bookingObj.numberOfGuests,
+    totalPrice: bookingObj.totalPrice,
+    status: bookingObj.status,
+    specialRequests: bookingObj.specialRequests,
+    paymentMethod: bookingObj.paymentMethod,
+    createdAt: bookingObj.createdAt,
+  };
+};
+
 exports.createBooking = async (req, res) => {
   try {
     const { resortId, checkInDate, checkOutDate, numberOfGuests, specialRequests, paymentMethod } =
@@ -57,7 +76,8 @@ exports.createBooking = async (req, res) => {
 exports.getUserBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({ userId: req.userId }).populate('resortId');
-    res.json({ message: 'Bookings fetched successfully', data: bookings });
+    const formattedBookings = bookings.map(formatBooking);
+    res.json({ message: 'Bookings fetched successfully', data: formattedBookings });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch bookings', error: error.message });
   }
@@ -71,12 +91,17 @@ exports.getBookingById = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    // Check if user is owner or admin
-    if (booking.userId._id.toString() !== req.userId && req.userRole !== 'admin') {
+    // Allow booking owner, property owner, manager or superadmin to view
+    if (
+      booking.userId._id.toString() !== req.userId &&
+      req.userRole !== 'property_owner' &&
+      req.userRole !== 'manager' &&
+      req.userRole !== 'superadmin'
+    ) {
       return res.status(403).json({ message: 'Unauthorized' });
     }
 
-    res.json({ data: booking });
+    res.json({ data: formatBooking(booking) });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch booking', error: error.message });
   }
@@ -94,13 +119,13 @@ exports.updateBookingStatus = async (req, res) => {
       req.params.id,
       { status },
       { new: true }
-    );
+    ).populate('resortId');
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    res.json({ message: 'Booking status updated', data: booking });
+    res.json({ message: 'Booking status updated', data: formatBooking(booking) });
   } catch (error) {
     res.status(500).json({ message: 'Failed to update booking', error: error.message });
   }
@@ -108,20 +133,25 @@ exports.updateBookingStatus = async (req, res) => {
 
 exports.cancelBooking = async (req, res) => {
   try {
-    const booking = await Booking.findById(req.params.id);
+    const booking = await Booking.findById(req.params.id).populate('resortId');
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    if (booking.userId.toString() !== req.userId && req.userRole !== 'admin') {
+    if (
+      booking.userId.toString() !== req.userId &&
+      req.userRole !== 'property_owner' &&
+      req.userRole !== 'manager' &&
+      req.userRole !== 'superadmin'
+    ) {
       return res.status(403).json({ message: 'Unauthorized' });
     }
 
     booking.status = 'cancelled';
     await booking.save();
 
-    res.json({ message: 'Booking cancelled successfully', data: booking });
+    res.json({ message: 'Booking cancelled successfully', data: formatBooking(booking) });
   } catch (error) {
     res.status(500).json({ message: 'Failed to cancel booking', error: error.message });
   }
@@ -130,7 +160,8 @@ exports.cancelBooking = async (req, res) => {
 exports.getAllBookings = async (req, res) => {
   try {
     const bookings = await Booking.find().populate('userId').populate('resortId');
-    res.json({ message: 'All bookings fetched', count: bookings.length, data: bookings });
+    const formattedBookings = bookings.map(formatBooking);
+    res.json({ message: 'All bookings fetched', count: formattedBookings.length, data: formattedBookings });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch bookings', error: error.message });
   }

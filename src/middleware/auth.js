@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 // Role-based permissions mapping
 const rolePermissions = {
   user: ['view_resorts', 'create_booking', 'view_own_booking', 'cancel_own_booking'],
-  admin: [
+  property_owner: [
     'view_resorts',
     'create_resort',
     'update_resort',
@@ -14,6 +14,13 @@ const rolePermissions = {
     'view_all_bookings',
     'update_booking_status',
     'manage_users',
+  ],
+  manager: [
+    'view_resorts',
+    'view_all_bookings',
+    'manage_bookings',
+    'update_booking_status',
+    'chat_with_customers',
   ],
   superadmin: [
     'view_resorts',
@@ -27,6 +34,7 @@ const rolePermissions = {
     'update_booking_status',
     'manage_users',
     'manage_admins',
+    'manage_property_owners',
     'system_settings',
     'view_analytics',
   ],
@@ -68,16 +76,16 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-const adminMiddleware = (req, res, next) => {
+const propertyOwnerMiddleware = (req, res, next) => {
   try {
     if (!req.userRole) {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    if (req.userRole !== 'admin' && req.userRole !== 'superadmin') {
+    if (req.userRole !== 'property_owner' && req.userRole !== 'superadmin') {
       return res
         .status(403)
-        .json({ message: 'Admin access required. Your role: ' + req.userRole });
+        .json({ message: 'Property owner access required. Your role: ' + req.userRole });
     }
 
     next();
@@ -133,7 +141,7 @@ const permissionMiddleware = (requiredPermission) => {
 
 module.exports = {
   authMiddleware,
-  adminMiddleware,
+  propertyOwnerMiddleware,
   superadminMiddleware,
   permissionMiddleware,
   rolePermissions,
