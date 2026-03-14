@@ -1,46 +1,52 @@
 const mongoose = require('mongoose');
 
-const bookingSchema = new mongoose.Schema(
-  {
+const BookingSchema = new mongoose.Schema({
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
     },
     resortId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Resort',
-      required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Resort',
+        required: true
     },
-    checkInDate: {
-      type: Date,
-      required: true,
+    roomId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Room',
+        required: true
     },
-    checkOutDate: {
-      type: Date,
-      required: true,
+    checkIn: {
+        type: Date,
+        required: [true, 'Please provide check-in date']
     },
-    numberOfGuests: {
-      type: Number,
-      required: true,
+    checkOut: {
+        type: Date,
+        required: [true, 'Please provide check-out date']
+    },
+    guests: {
+        type: Number,
+        required: [true, 'Please provide number of guests'],
+        min: [1, 'At least 1 guest required']
     },
     totalPrice: {
-      type: Number,
-      required: true,
+        type: Number,
+        required: true
     },
     status: {
-      type: String,
-      enum: ['pending', 'confirmed', 'cancelled', 'completed'],
-      default: 'pending',
+        type: String,
+        enum: ['Pending', 'Confirmed', 'Cancelled', 'Completed'],
+        default: 'Pending'
     },
-    specialRequests: String,
-    paymentMethod: {
-      type: String,
-      enum: ['credit_card', 'debit_card', 'paypal'],
-      default: 'credit_card',
+    paymentStatus: {
+        type: String,
+        enum: ['Unpaid', 'Paid', 'Refunded'],
+        default: 'Unpaid'
     },
-  },
-  { timestamps: true }
-);
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+});
 
-module.exports = mongoose.model('Booking', bookingSchema);
+module.exports = mongoose.model('Booking', BookingSchema);

@@ -1,64 +1,61 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const userSchema = new mongoose.Schema(
-  {
+const UserSchema = new mongoose.Schema({
     name: {
-      type: String,
-      required: true,
-      trim: true,
+        type: String,
+        required: [true, 'Please provide a name'],
+        trim: true,
+        maxlength: [50, 'Name cannot exceed 50 characters']
     },
     email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      match: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+        type: String,
+        required: [true, 'Please provide an email'],
+        unique: true,
+        trim: true,
+        lowercase: true,
+        match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email']
     },
     password: {
-      type: String,
-      required: true,
-      minlength: 6,
-      select: false,
-    },
-    confirmPassword: {
-      type: String,
-      required: true,
-      minlength: 6,
-      select: false,
-    },
-    phone: {
-      type: String,
-      trim: true,
+        type: String,
+        required: [true, 'Please provide a password'],
+        minlength: [6, 'Password must be at least 6 characters'],
+        select: false
     },
     role: {
-      type: String,
-      enum: ['user', 'property_owner', 'manager', 'superadmin'],
-      default: 'user',
+        type: String,
+        enum: ['Guest', 'ResortOwner', 'Admin', 'SuperAdmin'],
+        default: 'Guest'
     },
-    isActive: {
-      type: Boolean,
-      default: true,
+    phone: {
+        type: String,
+        trim: true
     },
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+    profileImage: {
+        type: String,
+        default: 'default-profile.jpg'
     },
-  },
-  { timestamps: true }
-);
-
-// Hash password before saving
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+}, {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
 });
 
-// Method to compare passwords
-userSchema.methods.comparePassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+// Hash password before saving
+UserSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) {
+        next();
+    }
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+});
+
+// Match password for login
+UserSchema.methods.matchPassword = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model('User', UserSchema);

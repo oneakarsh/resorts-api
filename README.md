@@ -1,249 +1,109 @@
-# Resort Booking System API
+# Resort Booking Platform - Backend API
 
-A complete Express.js API for a resort booking system with MongoDB integration, JWT authentication, and admin functionality.
-
-## Features
-
-- ✅ User authentication (Register/Login) with JWT
-- ✅ Resort management with admin controls
-- ✅ Booking system with price calculation
-- ✅ Role-based access control (User/Admin)
-- ✅ MongoDB integration with Mongoose
-- ✅ CORS enabled
-- ✅ Comprehensive error handling
+A production-ready, modular, and scalable backend for an Airbnb-style Resort Booking Platform.
 
 ## Tech Stack
 
-- **Backend**: Express.js
-- **Database**: MongoDB with Mongoose
-- **Authentication**: JWT (JSON Web Tokens)
-- **Password Hashing**: bcryptjs
-- **Additional**: CORS, dotenv
-
-## Installation
-
-1. **Clone the repository**
-```bash
-cd c:\Users\akarsh.ramesh\Scape
-```
-
-2. **Install dependencies**
-```bash
-npm install
-```
-
-3. **Create .env file**
-```bash
-Copy .env.example to .env and update values:
-MONGODB_URI=mongodb://localhost:27017/resort-booking
-PORT=5000
-JWT_SECRET=your_jwt_secret_key_here_change_in_production
-NODE_ENV=development
-```
-
-4. **Start MongoDB**
-```bash
-# If using local MongoDB
-mongod
-
-# Or update MONGODB_URI to your cloud MongoDB instance (e.g., MongoDB Atlas)
-```
-
-5. **Run the server**
-```bash
-# Development mode (with auto-reload)
-npm run dev
-
-# Production mode
-npm start
-```
-
-Server will be running at `http://localhost:5000`
-
-## API Endpoints
-
-### Authentication
-
-- **POST** `/api/auth/register` - Register new user
-  ```json
-  {
-    "name": "John Doe",
-    "email": "john@example.com",
-    "password": "password123",
-    "phone": "+1234567890"
-  }
-  ```
-
-- **POST** `/api/auth/login` - Login user
-  ```json
-  {
-    "email": "john@example.com",
-    "password": "password123"
-  }
-  ```
-
-- **GET** `/api/auth/profile` - Get user profile (requires token)
-
-### Resorts
-
-- **GET** `/api/resorts` - Get all active resorts
-- **GET** `/api/resorts/:id` - Get resort details
-- **POST** `/api/resorts` - Create resort (Admin only)
-  ```json
-  {
-    "name": "Sunny Beach Resort",
-    "description": "Beautiful beachfront resort",
-    "location": "Miami, Florida",
-    "pricePerNight": 150,
-    "amenities": ["Pool", "Spa", "Restaurant"],
-    "maxGuests": 4,
-    "rooms": 50,
-    "image": "url_to_image"
-  }
-  ```
-
-- **PUT** `/api/resorts/:id` - Update resort (Admin only)
-- **DELETE** `/api/resorts/:id` - Delete resort (Admin only)
-
-### Bookings
-
-- **POST** `/api/bookings` - Create booking (requires auth)
-  ```json
-  {
-    "resortId": "resort_id_here",
-    "checkInDate": "2024-12-15",
-    "checkOutDate": "2024-12-20",
-    "numberOfGuests": 2,
-    "specialRequests": "Late checkout requested",
-    "paymentMethod": "credit_card"
-  }
-  ```
-
-- **GET** `/api/bookings` - Get user's bookings (requires auth)
-- **GET** `/api/bookings/:id` - Get booking details (requires auth)
-- **PATCH** `/api/bookings/:id/status` - Update booking status (Admin only)
-  ```json
-  {
-    "status": "confirmed"
-  }
-  ```
-
-- **PATCH** `/api/bookings/:id/cancel` - Cancel booking (requires auth)
-- **GET** `/api/bookings/admin/all` - Get all bookings (Admin only)
-
-## Authentication
-
-All protected endpoints require an `Authorization` header with a Bearer token:
-
-```
-Authorization: Bearer <your_jwt_token>
-```
-
-Tokens are provided after successful login/registration and expire in 7 days.
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Database**: MongoDB (Mongoose ODM)
+- **Authentication**: JWT, bcrypt
+- **Security**: Helmet, express-rate-limit, CORS
+- **File Uploads**: Multer (Local storage)
+- **Email**: Nodemailer
 
 ## Project Structure
 
-```
-resort-booking-api/
-├── src/
-│   ├── config/
-│   │   └── database.js          # MongoDB connection
-│   ├── controllers/
-│   │   ├── authController.js    # Auth logic
-│   │   ├── resortController.js  # Resort operations
-│   │   └── bookingController.js # Booking operations
-│   ├── middleware/
-│   │   └── auth.js              # JWT verification
-│   ├── models/
-│   │   ├── User.js              # User schema
-│   │   ├── Resort.js            # Resort schema
-│   │   └── Booking.js           # Booking schema
-│   └── routes/
-│       ├── authRoutes.js        # Auth endpoints
-│       ├── resortRoutes.js      # Resort endpoints
-│       └── bookingRoutes.js     # Booking endpoints
-├── server.js                    # Main server file
-├── .env.example                 # Environment variables template
-└── package.json                 # Dependencies
+```text
+backend/
+src/
+  controllers/      # Request handlers
+  models/           # Mongoose schemas
+  routes/           # API endpoints
+  middleware/       # Auth, error, and upload logic
+  services/         # External services (Email, Payment)
+  utils/            # Helper functions and JWT tools
+  config/           # Database and env setup
+app.js              # Express app configuration
+server.js           # Entry point
+.env                # Environment variables
 ```
 
-## Usage Examples
+## Local Development Setup
 
-### 1. Register a new user
-```bash
-curl -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "John Doe",
-    "email": "john@example.com",
-    "password": "password123",
-    "phone": "+1234567890"
-  }'
-```
+### Prerequisites
+- Node.js installed
+- MongoDB installed and running locally (`mongodb://127.0.0.1:27017/resort-booking`)
 
-### 2. Login
-```bash
-curl -X POST http://localhost:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "john@example.com",
-    "password": "password123"
-  }'
-```
+### Installation
 
-### 3. Get all resorts
-```bash
-curl -X GET http://localhost:5000/api/resorts
-```
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
 
-### 4. Create a booking
-```bash
-curl -X POST http://localhost:5000/api/bookings \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "resortId": "resort_id",
-    "checkInDate": "2024-12-15",
-    "checkOutDate": "2024-12-20",
-    "numberOfGuests": 2,
-    "paymentMethod": "credit_card"
-  }'
-```
+2. **Configure Environment**
+   Open `.env` and update the values if necessary.
+   ```env
+   PORT=5000
+   MONGO_URI=mongodb://127.0.0.1:27017/resort-booking
+   JWT_SECRET=your_secret_key
+   ```
 
-## Security Notes
+3. **Run for Development**
+   ```bash
+   npm run dev
+   ```
 
-- Always update `JWT_SECRET` in production
-- Use HTTPS in production
-- Store sensitive data in environment variables
-- Validate all user inputs
-- Use strong passwords for user accounts
-- Never commit `.env` file to version control
+## API Documentation
 
-## Future Enhancements
+### Authentication (`/api/auth`)
+- `POST /api/auth/register` - Register a new user (`Guest`, `ResortOwner`, `Admin`)
+- `POST /api/auth/login` - Login and receive JWT
+- `GET /api/auth/me` - Get current user profile (Requires JWT)
 
-- Add payment gateway integration
-- Implement reviews and ratings system
-- Add email notifications
-- Create admin dashboard
-- Implement rate limiting
-- Add database backups
-- Implement search and filters
-- Add availability calendar
+### Resorts (`/api/resorts`)
+- `GET /api/resorts` - Get all resorts (Supports pagination, sorting, filtering)
+- `GET /api/resorts/:id` - Get resort by ID
+- `POST /api/resorts` - Create resort (Required: `ResortOwner` or `Admin`)
+- `PUT /api/resorts/:id` - Update resort
+- `DELETE /api/resorts/:id` - Delete resort
 
-## Troubleshooting
+### Rooms (`/api/rooms`)
+- `POST /api/rooms` - Create room for a resort
+- `GET /api/resorts/:id/rooms` - Get all rooms for a resort
+- `PUT /api/rooms/:id` - Update room
+- `DELETE /api/rooms/:id` - Delete room
 
-**MongoDB connection error:**
-- Ensure MongoDB is running locally or update MONGODB_URI with correct connection string
-- Check network connectivity if using remote database
+### Bookings (`/api/bookings`)
+- `POST /api/bookings` - Create a new booking (Prevents double bookings)
+- `GET /api/bookings` - Get user's bookings
+- `GET /api/bookings/:id` - Get specific booking details
+- `DELETE /api/bookings/:id` - Cancel booking
 
-**Token expiration:**
-- Log in again to get a new token
-- Token expires in 7 days by default
+### Reviews (`/api/reviews`)
+- `POST /api/reviews` - Leave a review for a resort
+- `GET /api/resorts/:id/reviews` - Get all reviews for a resort
 
-**Admin operations failing:**
-- Verify the user has admin role in the database
-- Check if valid token is provided in Authorization header
+### Search (`/api/search`)
+- `GET /api/search` - Search resorts by location, guests, price, amenities, rating.
 
-## License
+### Admin (`/api/admin`)
+- `GET /api/admin/users` - List all users
+- `GET /api/admin/resorts` - List all resorts with owner details
+- `GET /api/admin/bookings` - List all bookings in the system
+- `PUT /api/admin/resorts/:id/verify` - Approve/Verify a resort
+- `DELETE /api/admin/users/:id` - Ban/Delete a user
 
-ISC
+## Security Implementation
+- **Helmet**: Secures Express apps by setting various HTTP headers.
+- **Rate Limiting**: Prevents brute-force attacks and abuse.
+- **Password Hashing**: Uses bcrypt for secure storage.
+- **JWT Protection**: Secure stateless authentication.
+- **Role-Based Access**: Middleware to restrict endpoints based on user roles.
+
+## Design Decisions
+- **Async Handler**: Centralized try-catch wrapper for cleaner controllers.
+- **Consistent Response Format**: All APIs return `{ success: true/false, data/message: ... }`.
+- **Atomic Rating Updates**: Resort rating is automatically recalculated on review submission/deletion.
+- **Modular Routes**: Clear separation of concerns for easy extension.

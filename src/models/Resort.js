@@ -1,19 +1,43 @@
 const mongoose = require('mongoose');
 
-const resortSchema = new mongoose.Schema(
-  {
+const ResortSchema = new mongoose.Schema({
     name: {
-      type: String,
-      required: true,
-      trim: true,
+        type: String,
+        required: [true, 'Please provide a resort name'],
+        trim: true,
+        maxlength: [100, 'Name cannot exceed 100 characters']
     },
     description: {
-      type: String,
-      required: true,
+        type: String,
+        required: [true, 'Please provide a description'],
+        maxlength: [1000, 'Description cannot exceed 1000 characters']
     },
     location: {
-      type: String,
-      required: true,
+        type: String,
+        required: [true, 'Please provide a location']
+    },
+    latitude: {
+        type: Number
+    },
+    longitude: {
+        type: Number
+    },
+    amenities: {
+        type: [String],
+        default: []
+    },
+    images: {
+        type: [String],
+        default: ['default-resort.jpg']
+    },
+    ownerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    verified: {
+        type: Boolean,
+        default: false
     },
     latitude: {
       type: Number,
@@ -24,31 +48,41 @@ const resortSchema = new mongoose.Schema(
       default: 0,
     },
     pricePerNight: {
-      type: Number,
-      required: true,
+        type: Number,
+        default: 0
     },
-    amenities: [String],
     maxGuests: {
-      type: Number,
-      required: true,
-    },
-    rooms: {
-      type: Number,
-      required: true,
+        type: Number,
+        default: 1
     },
     rating: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 5,
+        type: Number,
+        min: [1, 'Rating must be at least 1'],
+        max: [5, 'Rating cannot exceed 5'],
+        default: 4.5
     },
-    image: String,
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
-  },
-  { timestamps: true }
-);
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+}, {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
 
-module.exports = mongoose.model('Resort', resortSchema);
+// Cascade delete rooms when a resort is deleted
+ResortSchema.pre('deleteOne', { document: true, query: false }, async function (next) {
+    console.log(`Rooms being removed from resort ${this._id}`);
+    await this.model('Room').deleteMany({ resortId: this._id });
+    next();
+});
+
+// Reverse populate with virtuals
+ResortSchema.virtual('rooms', {
+    ref: 'Room',
+    localField: '_id',
+    foreignField: 'resortId',
+    justOne: false
+});
+
+module.exports = mongoose.model('Resort', ResortSchema);
