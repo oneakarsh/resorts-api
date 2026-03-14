@@ -32,9 +32,29 @@ const resortSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    address: {
+      type: String,
+      required: true,
+    },
+    area: {
+      type: String,
+      required: true,
+    },
+    contactNumber: {
+      type: String,
+    },
     rooms: {
       type: Number,
       required: true,
+    },
+    availableRooms: {
+      type: Number,
+      default: function() {
+        return this.rooms;
+      }
+    },
+    otherDetails: {
+      type: String,
     },
     rating: {
       type: Number,
@@ -49,6 +69,10 @@ const resortSchema = new mongoose.Schema(
       required: true,
     },
     isActive: {
+      type: Boolean,
+      default: true,
+    },
+    isAvailable: {
       type: Boolean,
       default: true,
     },

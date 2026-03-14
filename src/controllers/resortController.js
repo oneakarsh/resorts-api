@@ -13,11 +13,17 @@ const formatResort = (resort) => {
     longitude: resortObj.longitude || 0,
     pricePerNight: resortObj.pricePerNight,
     amenities: resortObj.amenities || [],
+    address: resortObj.address,
+    area: resortObj.area,
+    contactNumber: resortObj.contactNumber,
     maxGuests: resortObj.maxGuests,
     rooms: resortObj.rooms,
+    availableRooms: resortObj.availableRooms,
+    otherDetails: resortObj.otherDetails,
     rating: resortObj.rating || 0,
     image: resortObj.image,
     isActive: resortObj.isActive,
+    isAvailable: resortObj.isAvailable,
     createdAt: resortObj.createdAt,
   };
 };
@@ -112,10 +118,13 @@ exports.getResortById = async (req, res) => {
 
 exports.createResort = async (req, res) => {
   try {
-    const { name, description, location, latitude, longitude, pricePerNight, amenities, maxGuests, rooms, image } =
-      req.body;
+    const { 
+      name, description, location, address, area, contactNumber, 
+      latitude, longitude, pricePerNight, amenities, maxGuests, 
+      rooms, otherDetails, image 
+    } = req.body;
 
-    if (!name || !description || !location || !pricePerNight || !maxGuests || !rooms) {
+    if (!name || !description || !location || !address || !area || !pricePerNight || !maxGuests || !rooms) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
@@ -123,12 +132,17 @@ exports.createResort = async (req, res) => {
       name,
       description,
       location,
+      address,
+      area,
+      contactNumber,
       latitude: latitude || 0,
       longitude: longitude || 0,
       pricePerNight,
       amenities,
       maxGuests,
       rooms,
+      availableRooms: rooms,
+      otherDetails,
       image,
       owner: req.userId,
     });

@@ -16,6 +16,8 @@ const resortValidation = [
   check('name', 'Name is required').not().isEmpty(),
   check('description', 'Description is required').not().isEmpty(),
   check('location', 'Location is required').not().isEmpty(),
+  check('address', 'Address is required').not().isEmpty(),
+  check('area', 'Area is required').not().isEmpty(),
   check('pricePerNight', 'Price per night must be a number').isNumeric(),
   check('maxGuests', 'Max guests must be a number').isNumeric(),
   check('rooms', 'Rooms must be a number').isNumeric(),
