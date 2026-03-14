@@ -121,30 +121,52 @@ exports.createResort = async (req, res) => {
 
 exports.updateResort = async (req, res) => {
   try {
+    const resortId = req.params.id;
+    const existingResort = await prisma.resort.findUnique({ where: { id: resortId } });
+
+    if (!existingResort) return res.status(404).json({ message: 'Resort not found' });
+
+    // Privacy check: only owner or super admin
+    if (req.userRole === 'PROPERTY_OWNER' && existingResort.ownerId !== req.userId) {
+      return res.status(403).json({ message: 'You can only update your own resorts' });
+    }
+
     const data = { ...req.body };
     if (data.pricePerNight) data.pricePerNight = parseFloat(data.pricePerNight);
     if (data.maxGuests) data.maxGuests = parseInt(data.maxGuests);
     if (data.rooms) data.rooms = parseInt(data.rooms);
+    if (data.latitude) data.latitude = parseFloat(data.latitude);
+    if (data.longitude) data.longitude = parseFloat(data.longitude);
 
     const resort = await prisma.resort.update({
-      where: { id: req.params.id },
+      where: { id: resortId },
       data,
     });
 
     res.json({ message: 'Resort updated successfully', data: formatResort(resort) });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to update resort' });
+    res.status(500).json({ message: 'Failed to update resort', error: error.message });
   }
 };
 
 exports.deleteResort = async (req, res) => {
   try {
+    const resortId = req.params.id;
+    const existingResort = await prisma.resort.findUnique({ where: { id: resortId } });
+
+    if (!existingResort) return res.status(404).json({ message: 'Resort not found' });
+
+    // Privacy check: only owner or super admin
+    if (req.userRole === 'PROPERTY_OWNER' && existingResort.ownerId !== req.userId) {
+      return res.status(403).json({ message: 'You can only delete your own resorts' });
+    }
+
     await prisma.resort.update({
-      where: { id: req.params.id },
+      where: { id: resortId },
       data: { isActive: false },
     });
     res.json({ message: 'Resort deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to delete resort' });
+    res.status(500).json({ message: 'Failed to delete resort', error: error.message });
   }
 };

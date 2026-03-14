@@ -169,14 +169,27 @@ exports.getAllBookings = async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
+    const where = {};
+    
+    // If property owner, only show bookings for their resorts
+    if (req.userRole === 'PROPERTY_OWNER') {
+      const ownerResorts = await prisma.resort.findMany({
+        where: { ownerId: req.userId },
+        select: { id: true }
+      });
+      const resortIds = ownerResorts.map(r => r.id);
+      where.resortId = { in: resortIds };
+    }
+
     const bookings = await prisma.booking.findMany({
+      where,
       include: { user: true, resort: true },
       orderBy: { createdAt: 'desc' },
       skip,
       take: parseInt(limit)
     });
 
-    const total = await prisma.booking.count();
+    const total = await prisma.booking.count({ where });
 
     res.json({
       message: 'All bookings fetched',
@@ -187,6 +200,6 @@ exports.getAllBookings = async (req, res) => {
       data: bookings.map(formatBooking)
     });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch bookings' });
+    res.status(500).json({ message: 'Failed to fetch bookings', error: error.message });
   }
 };
