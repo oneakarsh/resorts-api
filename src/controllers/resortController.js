@@ -142,16 +142,24 @@ exports.createResort = async (req, res) => {
 
 exports.updateResort = async (req, res) => {
   try {
-    const resort = await Resort.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const resortId = req.params.id;
+    const resort = await Resort.findById(resortId);
 
     if (!resort) {
       return res.status(404).json({ message: 'Resort not found' });
     }
 
-    res.json({ message: 'Resort updated successfully', data: formatResort(resort) });
+    // Ownership check
+    if (req.userRole === 'property_owner' && resort.owner.toString() !== req.userId) {
+      return res.status(403).json({ message: 'You can only update your own resorts' });
+    }
+
+    const updatedResort = await Resort.findByIdAndUpdate(resortId, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    res.json({ message: 'Resort updated successfully', data: formatResort(updatedResort) });
   } catch (error) {
     res.status(500).json({ message: 'Failed to update resort', error: error.message });
   }
@@ -159,15 +167,20 @@ exports.updateResort = async (req, res) => {
 
 exports.deleteResort = async (req, res) => {
   try {
-    const resort = await Resort.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-      { new: true }
-    );
+    const resortId = req.params.id;
+    const resort = await Resort.findById(resortId);
 
     if (!resort) {
       return res.status(404).json({ message: 'Resort not found' });
     }
+
+    // Ownership check
+    if (req.userRole === 'property_owner' && resort.owner.toString() !== req.userId) {
+      return res.status(403).json({ message: 'You can only delete your own resorts' });
+    }
+
+    resort.isActive = false;
+    await resort.save();
 
     res.json({ message: 'Resort deleted successfully' });
   } catch (error) {

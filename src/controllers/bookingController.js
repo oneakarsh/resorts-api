@@ -203,14 +203,23 @@ exports.getAllBookings = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const bookings = await Booking.find()
+    const filter = {};
+    
+    // If property owner, only show bookings for their resorts
+    if (req.userRole === 'property_owner') {
+      const ownerResorts = await Resort.find({ owner: req.userId }).select('_id');
+      const resortIds = ownerResorts.map(r => r._id);
+      filter.resortId = { $in: resortIds };
+    }
+
+    const bookings = await Booking.find(filter)
       .populate('userId')
       .populate('resortId')
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
 
-    const total = await Booking.countDocuments();
+    const total = await Booking.countDocuments(filter);
     const formattedBookings = bookings.map(formatBooking);
 
     res.json({
