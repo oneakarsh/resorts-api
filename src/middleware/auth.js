@@ -1,9 +1,9 @@
 const jwt = require('jsonwebtoken');
 
-// Role-based permissions mapping
+// Role-based permissions mapping (Lowercased roles from Prisma enum)
 const rolePermissions = {
-  user: ['view_resorts', 'create_booking', 'view_own_booking', 'cancel_own_booking'],
-  property_owner: [
+  USER: ['view_resorts', 'create_booking', 'view_own_booking', 'cancel_own_booking'],
+  PROPERTY_OWNER: [
     'view_resorts',
     'create_resort',
     'update_resort',
@@ -15,14 +15,14 @@ const rolePermissions = {
     'update_booking_status',
     'manage_users',
   ],
-  manager: [
+  MANAGER: [
     'view_resorts',
     'view_all_bookings',
     'manage_bookings',
     'update_booking_status',
     'chat_with_customers',
   ],
-  superadmin: [
+  SUPERADMIN: [
     'view_resorts',
     'create_resort',
     'update_resort',
@@ -82,10 +82,11 @@ const propertyOwnerMiddleware = (req, res, next) => {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    if (req.userRole !== 'property_owner' && req.userRole !== 'superadmin') {
+    const role = req.userRole;
+    if (role !== 'PROPERTY_OWNER' && role !== 'SUPERADMIN') {
       return res
         .status(403)
-        .json({ message: 'Property owner access required. Your role: ' + req.userRole });
+        .json({ message: 'Property owner access required. Your role: ' + role });
     }
 
     next();
@@ -102,7 +103,7 @@ const superadminMiddleware = (req, res, next) => {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    if (req.userRole !== 'superadmin') {
+    if (req.userRole !== 'SUPERADMIN') {
       return res.status(403).json({
         message: 'Super admin access required. Your role: ' + req.userRole,
       });

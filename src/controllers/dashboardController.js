@@ -1,32 +1,42 @@
-const Resort = require('../models/Resort');
-const Booking = require('../models/Booking');
-const User = require('../models/User');
+const prisma = require('../lib/prisma');
 
 const getSuperAdminStats = async (req, res) => {
   try {
-    const totalResorts = await Resort.countDocuments();
-    const totalBookings = await Booking.countDocuments();
-    const totalUsers = await User.countDocuments();
-    const usersByRole = await User.aggregate([
-      { $group: { _id: '$role', count: { $sum: 1 } } }
-    ]);
+    const totalResortsPromise = prisma.resort.count();
+    const totalBookingsPromise = prisma.booking.count();
+    const totalUsersPromise = prisma.user.count();
 
-    const bookingsByStatus = await Booking.aggregate([
-      { $group: { _id: '$status', count: { $sum: 1 } } }
-    ]);
+    const usersByRolePromise = prisma.user.groupBy({
+      by: ['role'],
+      _count: { _all: true },
+    });
 
-    const totalRevenue = await Booking.aggregate([
-      { $match: { status: 'confirmed' } },
-      { $group: { _id: null, total: { $sum: '$totalPrice' } } }
+    const bookingsByStatusPromise = prisma.booking.groupBy({
+      by: ['status'],
+      _count: { _all: true },
+    });
+
+    const totalRevenuePromise = prisma.booking.aggregate({
+      where: { status: 'CONFIRMED' },
+      _sum: { totalPrice: true },
+    });
+
+    const [totalResorts, totalBookings, totalUsers, usersByRole, bookingsByStatus, totalRevenueAgg] = await Promise.all([
+      totalResortsPromise,
+      totalBookingsPromise,
+      totalUsersPromise,
+      usersByRolePromise,
+      bookingsByStatusPromise,
+      totalRevenuePromise,
     ]);
 
     res.json({
       resorts: totalResorts,
       bookings: totalBookings,
       users: totalUsers,
-      usersByRole,
-      bookingsByStatus,
-      totalRevenue: totalRevenue.length > 0 ? totalRevenue[0].total : 0
+      usersByRole: usersByRole.map(r => ({ _id: r.role.toLowerCase(), count: r._count._all })),
+      bookingsByStatus: bookingsByStatus.map(s => ({ _id: s.status.toLowerCase(), count: s._count._all })),
+      totalRevenue: totalRevenueAgg._sum.totalPrice || 0
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching super admin stats', error: error.message });
@@ -37,28 +47,36 @@ const getPropertyOwnerStats = async (req, res) => {
   try {
     const ownerId = req.userId;
     
-    // Resorts owned by this owner
-    const ownerResorts = await Resort.find({ owner: ownerId });
-    const resortIds = ownerResorts.map(r => r._id);
+    const ownerResorts = await prisma.resort.findMany({
+      where: { ownerId },
+      select: { id: true }
+    });
+    const resortIds = ownerResorts.map(r => r.id);
 
     const totalResorts = ownerResorts.length;
-    const totalBookings = await Booking.countDocuments({ resortId: { $in: resortIds } });
+    const totalBookings = await prisma.booking.count({
+      where: { resortId: { in: resortIds } }
+    });
 
-    const bookingsByStatus = await Booking.aggregate([
-      { $match: { resortId: { $in: resortIds } } },
-      { $group: { _id: '$status', count: { $sum: 1 } } }
-    ]);
+    const bookingsByStatus = await prisma.booking.groupBy({
+      by: ['status'],
+      where: { resortId: { in: resortIds } },
+      _count: { _all: true },
+    });
 
-    const totalRevenue = await Booking.aggregate([
-      { $match: { resortId: { $in: resortIds }, status: 'confirmed' } },
-      { $group: { _id: null, total: { $sum: '$totalPrice' } } }
-    ]);
+    const totalRevenueAgg = await prisma.booking.aggregate({
+      where: { 
+        resortId: { in: resortIds },
+        status: 'CONFIRMED' 
+      },
+      _sum: { totalPrice: true },
+    });
 
     res.json({
       resorts: totalResorts,
       bookings: totalBookings,
-      bookingsByStatus,
-      totalRevenue: totalRevenue.length > 0 ? totalRevenue[0].total : 0
+      bookingsByStatus: bookingsByStatus.map(s => ({ _id: s.status.toLowerCase(), count: s._count._all })),
+      totalRevenue: totalRevenueAgg._sum.totalPrice || 0
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching property owner stats', error: error.message });

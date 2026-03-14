@@ -1,97 +1,82 @@
-const Resort = require('../models/Resort');
+const prisma = require('../lib/prisma');
 
-// Helper function to format resort response
 const formatResort = (resort) => {
-  const resortObj = resort.toObject ? resort.toObject() : resort;
   return {
-    id: resortObj._id,
-    _id: resortObj._id,
-    name: resortObj.name,
-    description: resortObj.description,
-    location: resortObj.location,
-    latitude: resortObj.latitude || 0,
-    longitude: resortObj.longitude || 0,
-    pricePerNight: resortObj.pricePerNight,
-    amenities: resortObj.amenities || [],
-    maxGuests: resortObj.maxGuests,
-    rooms: resortObj.rooms,
-    rating: resortObj.rating || 0,
-    image: resortObj.image,
-    isActive: resortObj.isActive,
-    createdAt: resortObj.createdAt,
+    id: resort.id,
+    name: resort.name,
+    description: resort.description,
+    location: resort.location,
+    latitude: resort.latitude,
+    longitude: resort.longitude,
+    pricePerNight: resort.pricePerNight,
+    amenities: resort.amenities,
+    maxGuests: resort.maxGuests,
+    rooms: resort.rooms,
+    rating: resort.rating,
+    image: resort.image,
+    isActive: resort.isActive,
+    createdAt: resort.createdAt,
   };
 };
 
 exports.getAllResorts = async (req, res) => {
   try {
-    const { amenities, minRate, maxRate, location, search, sort } = req.query;
+    const { amenities, minRate, maxRate, location, search, sort, page = 1, limit = 10 } = req.query;
 
-    const filter = { isActive: true };
+    const where = { isActive: true };
 
     if (location) {
-      filter.location = { $regex: location, $options: 'i' };
+      where.location = { contains: location, mode: 'insensitive' };
     }
 
     if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { location: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { location: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
       ];
     }
 
     if (amenities) {
-      let amenArray = [];
-      if (typeof amenities === 'string') {
-        try {
-          const parsed = JSON.parse(amenities);
-          if (Array.isArray(parsed)) amenArray = parsed;
-        } catch (e) {
-          amenArray = amenities.split(',').map((a) => a.trim()).filter(Boolean);
-        }
-      } else if (Array.isArray(amenities)) {
-        amenArray = amenities;
-      }
-
-      if (amenArray.length) {
-        filter.amenities = { $all: amenArray };
-      }
+      const amenArray = Array.isArray(amenities) ? amenities : amenities.split(',').map(a => a.trim());
+      where.amenities = { hasEvery: amenArray };
     }
 
     if (minRate || maxRate) {
-      const priceFilter = {};
-      if (minRate && !Number.isNaN(Number(minRate))) priceFilter.$gte = Number(minRate);
-      if (maxRate && !Number.isNaN(Number(maxRate))) priceFilter.$lte = Number(maxRate);
-      if (Object.keys(priceFilter).length) filter.pricePerNight = priceFilter;
+      where.pricePerNight = {};
+      if (minRate) where.pricePerNight.gte = parseFloat(minRate);
+      if (maxRate) where.pricePerNight.lte = parseFloat(maxRate);
     }
 
-    // Sorting
-    let sortQuery = { createdAt: -1 }; // Default
+    let orderBy = { createdAt: 'desc' };
     if (sort) {
       const sortFields = sort.split(',');
-      sortQuery = {};
-      sortFields.forEach((field) => {
-        const order = field.startsWith('-') ? -1 : 1;
+      orderBy = sortFields.map((field) => {
+        const order = field.startsWith('-') ? 'desc' : 'asc';
         const fieldName = field.startsWith('-') ? field.substring(1) : field;
-        sortQuery[fieldName] = order;
+        return { [fieldName]: order };
       });
     }
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const take = parseInt(limit);
 
-    const resorts = await Resort.find(filter).sort(sortQuery).skip(skip).limit(limit);
-    const total = await Resort.countDocuments(filter);
-    const formattedResorts = resorts.map(formatResort);
+    const resorts = await prisma.resort.findMany({
+      where,
+      orderBy,
+      skip,
+      take,
+    });
+
+    const total = await prisma.resort.count({ where });
 
     res.json({
       message: 'Resorts fetched successfully',
-      count: formattedResorts.length,
+      count: resorts.length,
       total,
-      page,
-      pages: Math.ceil(total / limit),
-      data: formattedResorts,
+      page: parseInt(page),
+      pages: Math.ceil(total / take),
+      data: resorts.map(formatResort),
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch resorts', error: error.message });
@@ -100,40 +85,34 @@ exports.getAllResorts = async (req, res) => {
 
 exports.getResortById = async (req, res) => {
   try {
-    const resort = await Resort.findById(req.params.id);
-    if (!resort) {
-      return res.status(404).json({ message: 'Resort not found' });
-    }
+    const resort = await prisma.resort.findUnique({ where: { id: req.params.id } });
+    if (!resort) return res.status(404).json({ message: 'Resort not found' });
     res.json({ data: formatResort(resort) });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch resort', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch resort' });
   }
 };
 
 exports.createResort = async (req, res) => {
   try {
-    const { name, description, location, latitude, longitude, pricePerNight, amenities, maxGuests, rooms, image } =
-      req.body;
-
-    if (!name || !description || !location || !pricePerNight || !maxGuests || !rooms) {
-      return res.status(400).json({ message: 'Missing required fields' });
-    }
-
-    const resort = new Resort({
-      name,
-      description,
-      location,
-      latitude: latitude || 0,
-      longitude: longitude || 0,
-      pricePerNight,
-      amenities,
-      maxGuests,
-      rooms,
-      image,
-      owner: req.userId,
+    const { name, description, location, latitude, longitude, pricePerNight, amenities, maxGuests, rooms, image } = req.body;
+    
+    const resort = await prisma.resort.create({
+      data: {
+        name,
+        description,
+        location,
+        latitude: parseFloat(latitude) || 0,
+        longitude: parseFloat(longitude) || 0,
+        pricePerNight: parseFloat(pricePerNight),
+        amenities: Array.isArray(amenities) ? amenities : (amenities ? amenities.split(',') : []),
+        maxGuests: parseInt(maxGuests),
+        rooms: parseInt(rooms),
+        image,
+        ownerId: req.userId,
+      },
     });
 
-    await resort.save();
     res.status(201).json({ message: 'Resort created successfully', data: formatResort(resort) });
   } catch (error) {
     res.status(500).json({ message: 'Failed to create resort', error: error.message });
@@ -142,35 +121,30 @@ exports.createResort = async (req, res) => {
 
 exports.updateResort = async (req, res) => {
   try {
-    const resort = await Resort.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const data = { ...req.body };
+    if (data.pricePerNight) data.pricePerNight = parseFloat(data.pricePerNight);
+    if (data.maxGuests) data.maxGuests = parseInt(data.maxGuests);
+    if (data.rooms) data.rooms = parseInt(data.rooms);
 
-    if (!resort) {
-      return res.status(404).json({ message: 'Resort not found' });
-    }
+    const resort = await prisma.resort.update({
+      where: { id: req.params.id },
+      data,
+    });
 
     res.json({ message: 'Resort updated successfully', data: formatResort(resort) });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to update resort', error: error.message });
+    res.status(500).json({ message: 'Failed to update resort' });
   }
 };
 
 exports.deleteResort = async (req, res) => {
   try {
-    const resort = await Resort.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-      { new: true }
-    );
-
-    if (!resort) {
-      return res.status(404).json({ message: 'Resort not found' });
-    }
-
+    await prisma.resort.update({
+      where: { id: req.params.id },
+      data: { isActive: false },
+    });
     res.json({ message: 'Resort deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to delete resort', error: error.message });
+    res.status(500).json({ message: 'Failed to delete resort' });
   }
 };
