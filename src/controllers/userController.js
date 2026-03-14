@@ -156,6 +156,15 @@ exports.updateUser = async (req, res) => {
       });
     }
 
+    // Authorization check: Only superadmin or the creator can update
+    const isCreator = user.createdBy && user.createdBy.toString() === req.userId;
+    if (req.userRole !== 'superadmin' && !isCreator) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized. You can only update users you created.',
+      });
+    }
+
     // Check if email is being changed to an already taken email
     if (email && email !== user.email) {
       const existingUser = await User.findOne({ email });
@@ -172,8 +181,8 @@ exports.updateUser = async (req, res) => {
     if (email) user.email = email;
     if (phone !== undefined) user.phone = phone;
     if (role) {
-      // Only superadmin can change roles
-      if (req.userRole !== 'superadmin') {
+      // Only superadmin can change roles, unless it's a creator managing their manager
+      if (req.userRole !== 'superadmin' && !isCreator) {
         return res.status(403).json({
           success: false,
           message: 'Only superadmins can change user roles',
@@ -182,11 +191,11 @@ exports.updateUser = async (req, res) => {
       user.role = role;
     }
     if (isActive !== undefined) {
-      // Only superadmin can deactivate users
-      if (req.userRole !== 'superadmin') {
+      // Only superadmin or creator can change status
+      if (req.userRole !== 'superadmin' && !isCreator) {
         return res.status(403).json({
           success: false,
-          message: 'Only superadmins can deactivate users',
+          message: 'Only superadmins or creators can deactivate users',
         });
       }
       user.isActive = isActive;
@@ -232,6 +241,15 @@ exports.deleteUser = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Cannot delete your own account',
+      });
+    }
+
+    // Authorization check: Only superadmin or the creator can delete
+    const isCreator = user.createdBy && user.createdBy.toString() === req.userId;
+    if (req.userRole !== 'superadmin' && !isCreator) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized. You can only delete users you created.',
       });
     }
 

@@ -200,11 +200,19 @@ router.get('/profile', authMiddleware, getProfile);
  */
 router.post('/property-owner/create', authMiddleware, superadminMiddleware, permissionMiddleware('manage_property_owners'), createPropertyOwner);
 
+// Role-based middleware to allow both SuperAdmin and PropertyOwner
+const managerCreationMiddleware = (req, res, next) => {
+  if (req.userRole === 'superadmin' || req.userRole === 'property_owner') {
+    return next();
+  }
+  return res.status(403).json({ message: 'Access denied. Managers can only be created by SuperAdmins or Property Owners.' });
+};
+
 /**
  * @swagger
  * /api/auth/manager/create:
  *   post:
- *     summary: Create a manager (Super Admin only)
+ *     summary: Create a manager (Super Admin/Property Owner only)
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
@@ -212,7 +220,7 @@ router.post('/property-owner/create', authMiddleware, superadminMiddleware, perm
  *       201:
  *         description: Manager created successfully
  */
-router.post('/manager/create', authMiddleware, superadminMiddleware, permissionMiddleware('manage_property_owners'), createManager);
+router.post('/manager/create', authMiddleware, managerCreationMiddleware, createManager);
 
 /**
  * @swagger

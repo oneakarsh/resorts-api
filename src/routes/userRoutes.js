@@ -59,11 +59,19 @@ router.get('/:id', authMiddleware, superadminMiddleware, permissionMiddleware('m
  */
 router.post('/', authMiddleware, superadminMiddleware, permissionMiddleware('manage_users'), createUser);
 
+// Middleware to allow SuperAdmin or PropertyOwner for update/delete
+const adminOrOwnerMiddleware = (req, res, next) => {
+  if (req.userRole === 'superadmin' || req.userRole === 'property_owner') {
+    return next();
+  }
+  return res.status(403).json({ message: 'Access denied.' });
+};
+
 /**
  * @swagger
  * /api/users/{id}:
  *   put:
- *     summary: Update a user (Super Admin only)
+ *     summary: Update a user (Super Admin/Property Owner only)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -77,13 +85,13 @@ router.post('/', authMiddleware, superadminMiddleware, permissionMiddleware('man
  *       200:
  *         description: User updated successfully
  */
-router.put('/:id', authMiddleware, superadminMiddleware, permissionMiddleware('manage_users'), updateUser);
+router.put('/:id', authMiddleware, adminOrOwnerMiddleware, updateUser);
 
 /**
  * @swagger
  * /api/users/{id}:
  *   delete:
- *     summary: Delete a user (Super Admin only)
+ *     summary: Delete a user (Super Admin/Property Owner only)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -97,6 +105,6 @@ router.put('/:id', authMiddleware, superadminMiddleware, permissionMiddleware('m
  *       200:
  *         description: User deleted successfully
  */
-router.delete('/:id', authMiddleware, superadminMiddleware, permissionMiddleware('manage_users'), deleteUser);
+router.delete('/:id', authMiddleware, adminOrOwnerMiddleware, deleteUser);
 
 module.exports = router;
