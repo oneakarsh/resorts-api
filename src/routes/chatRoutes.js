@@ -4,6 +4,9 @@ const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 
+// All chat routes require authentication
+router.use(authMiddleware);
+
 /**
  * @swagger
  * /api/chat/send:
@@ -12,25 +15,9 @@ const router = express.Router();
  *     tags: [Chat]
  *     security:
  *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - receiverId
- *               - content
- *             properties:
- *               receiverId:
- *                 type: string
- *               content:
- *                 type: string
- *     responses:
- *       201:
- *         description: Message sent successfully
+...
  */
-router.post('/send', authMiddleware, sendMessage);
+router.post('/send', sendMessage);
 
 /**
  * @swagger
@@ -38,19 +25,9 @@ router.post('/send', authMiddleware, sendMessage);
  *   get:
  *     summary: Get conversation with another user
  *     tags: [Chat]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: withUserId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Conversation retrieved successfully
+...
  */
-router.get('/conversations/:withUserId', authMiddleware, getConversation);
+router.get('/conversations/:withUserId', getConversation);
 
 /**
  * @swagger
@@ -58,12 +35,8 @@ router.get('/conversations/:withUserId', authMiddleware, getConversation);
  *   get:
  *     summary: Get user inbox
  *     tags: [Chat]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Inbox retrieved successfully
+...
  */
-router.get('/inbox', authMiddleware, getInbox);
+router.get('/inbox', getInbox);
 
 module.exports = router;

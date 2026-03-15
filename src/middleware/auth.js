@@ -2,17 +2,16 @@ const jwt = require('jsonwebtoken');
 
 // Role-based permissions mapping
 const rolePermissions = {
-  user: ['view_resorts', 'create_booking', 'view_own_booking', 'cancel_own_booking'],
+  user: ['view_resorts', 'create_booking', 'view_own_booking', 'cancel_own_booking', 'send_message', 'view_own_messages'],
   property_owner: [
     'view_resorts',
     'create_resort',
     'update_resort',
     'delete_resort',
-    'create_booking',
-    'view_own_booking',
-    'cancel_own_booking',
-    'view_all_bookings',
+    'view_own_resort_bookings',
     'update_booking_status',
+    'send_message',
+    'view_own_messages',
     'manage_users',
   ],
   manager: [
@@ -21,6 +20,8 @@ const rolePermissions = {
     'manage_bookings',
     'update_booking_status',
     'chat_with_customers',
+    'send_message',
+    'view_own_messages',
   ],
   superadmin: [
     'view_resorts',
@@ -37,6 +38,8 @@ const rolePermissions = {
     'manage_property_owners',
     'system_settings',
     'view_analytics',
+    'send_message',
+    'view_all_messages',
   ],
 };
 
