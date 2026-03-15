@@ -16,6 +16,15 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 
+// Connect to MongoDB
+connectDB();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+const morgan = require('morgan');
+app.use(morgan('dev'));
+
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -29,14 +38,6 @@ app.use('/api/', limiter);
 
 // Swagger Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
-
-// Connect to MongoDB
-connectDB();
-// Middleware
-app.use(cors());
-app.use(express.json());
-const morgan = require('morgan');
-app.use(morgan('dev'));
 
 // Routes
 app.use('/api/auth', authRoutes);
