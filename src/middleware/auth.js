@@ -166,9 +166,12 @@ const permissionMiddleware = (requiredPermission) => {
   };
 };
 
+const propertyOwnerMiddleware = resortOwnerMiddleware;
+
 module.exports = {
   authMiddleware,
   resortOwnerMiddleware,
+  propertyOwnerMiddleware,
   resortManagerMiddleware,
   superadminMiddleware,
   permissionMiddleware,

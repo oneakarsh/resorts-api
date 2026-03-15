@@ -35,6 +35,8 @@ connectDB();
 // Middleware
 app.use(cors());
 app.use(express.json());
+const morgan = require('morgan');
+app.use(morgan('dev'));
 
 // Routes
 app.use('/api/auth', authRoutes);

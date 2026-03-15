@@ -7,7 +7,7 @@ const {
   cancelBooking,
   getAllBookings,
 } = require('../controllers/bookingController');
-const { authMiddleware, propertyOwnerMiddleware, permissionMiddleware } = require('../middleware/auth');
+const { authMiddleware, resortOwnerMiddleware, permissionMiddleware } = require('../middleware/auth');
 const { check } = require('express-validator');
 const { validate } = require('../middleware/validate');
 
@@ -74,9 +74,9 @@ router.get('/', authMiddleware, permissionMiddleware('view_own_booking'), getUse
 
 /**
  * @swagger
- * /api/bookings/property-owner/all:
+ * /api/bookings/resort-owner/all:
  *   get:
- *     summary: Get all bookings for property owner's resorts
+ *     summary: Get all bookings for resort owner's resorts
  *     tags: [Bookings]
  *     security:
  *       - bearerAuth: []
@@ -84,7 +84,7 @@ router.get('/', authMiddleware, permissionMiddleware('view_own_booking'), getUse
  *       200:
  *         description: List of all bookings retrieved successfully
  */
-router.get('/property-owner/all', authMiddleware, propertyOwnerMiddleware, permissionMiddleware('view_all_bookings'), getAllBookings);
+router.get('/resort-owner/all', authMiddleware, resortOwnerMiddleware, permissionMiddleware('view_all_bookings'), getAllBookings);
 
 /**
  * @swagger
@@ -110,7 +110,7 @@ router.get('/:id', authMiddleware, getBookingById);
  * @swagger
  * /api/bookings/{id}/status:
  *   patch:
- *     summary: Update booking status (Property Owner/Super Admin only)
+ *     summary: Update booking status (Resort Owner/Super Admin only)
  *     tags: [Bookings]
  *     security:
  *       - bearerAuth: []
@@ -136,7 +136,7 @@ router.get('/:id', authMiddleware, getBookingById);
  *       200:
  *         description: Booking status updated successfully
  */
-router.patch('/:id/status', authMiddleware, propertyOwnerMiddleware, permissionMiddleware('update_booking_status'), updateBookingStatus);
+router.patch('/:id/status', authMiddleware, resortOwnerMiddleware, permissionMiddleware('update_booking_status'), updateBookingStatus);
 
 /**
  * @swagger
