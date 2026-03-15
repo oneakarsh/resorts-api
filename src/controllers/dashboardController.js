@@ -35,15 +35,35 @@ const getSuperAdminStats = async (req, res) => {
 
 const getPropertyOwnerStats = async (req, res) => {
   try {
-    const ownerId = req.userId;
+    // If superadmin provides an ID in query, use that. Otherwise use current user's ID.
+    let ownerId = req.userId;
     
-    // Resorts owned by this owner
-    const ownerResorts = await Resort.find({ owner: ownerId });
-    const resortIds = ownerResorts.map(r => r._id);
+    if (req.userRole === 'superadmin' && req.query.propertyOwnerId) {
+      ownerId = req.query.propertyOwnerId;
+    }
+    
+    // Find resorts owned by this person (only active ones)
+    const ownerResorts = await Resort.find({ owner: ownerId, isActive: true });
+    
+    // Get the IDs of those resorts
+    const resortIds = ownerResorts.map(resort => resort._id);
 
-    const totalResorts = ownerResorts.length;
+    // If no resorts, return zeros immediately
+    if (resortIds.length === 0) {
+      return res.json({
+        ownerId,
+        resorts: 0,
+        bookings: 0,
+        bookingsByStatus: [],
+        totalRevenue: 0,
+        resortList: []
+      });
+    }
+
+    // Direct count for bookings
     const totalBookings = await Booking.countDocuments({ resortId: { $in: resortIds } });
 
+    // Aggregations must match the IDs
     const bookingsByStatus = await Booking.aggregate([
       { $match: { resortId: { $in: resortIds } } },
       { $group: { _id: '$status', count: { $sum: 1 } } }
@@ -55,12 +75,15 @@ const getPropertyOwnerStats = async (req, res) => {
     ]);
 
     res.json({
-      resorts: totalResorts,
+      ownerId,
+      resorts: ownerResorts.length,
       bookings: totalBookings,
       bookingsByStatus,
-      totalRevenue: totalRevenue.length > 0 ? totalRevenue[0].total : 0
+      totalRevenue: totalRevenue.length > 0 ? totalRevenue[0].total : 0,
+      resortList: ownerResorts.map(r => ({ id: r._id, name: r.name }))
     });
   } catch (error) {
+    console.error('Property Owner Stats Error:', error);
     res.status(500).json({ message: 'Error fetching property owner stats', error: error.message });
   }
 };

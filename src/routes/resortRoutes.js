@@ -81,6 +81,37 @@ router.post('/', authMiddleware, propertyOwnerMiddleware, permissionMiddleware('
  *         required: true
  *         schema:
  *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               location:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               area:
+ *                 type: string
+ *               pricePerNight:
+ *                 type: number
+ *               maxGuests:
+ *                 type: number
+ *               rooms:
+ *                 type: number
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               amenities:
+ *                 type: array
+ *                 items:
+ *                   type: string
  *     responses:
  *       200:
  *         description: Resort updated successfully

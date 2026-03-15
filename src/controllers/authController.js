@@ -26,10 +26,10 @@ exports.register = async (req, res) => {
     const { name, email, password, confirmPassword, phone, role } = req.body;
 
     // Validation
-    if (!name || !email || !password || !confirmPassword) {
+    if (!name || !email || !password || !confirmPassword || !phone) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: name, email, password, confirmPassword',
+        message: 'Missing required fields: name, email, password, confirmPassword, phone',
       });
     }
 
@@ -356,7 +356,11 @@ exports.createManager = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({ isActive: true });
+    // Only fetch property owners and managers
+    const users = await User.find({ 
+      isActive: true,
+      role: { $in: ['property_owner', 'manager'] }
+    });
 
     res.json({
       success: true,

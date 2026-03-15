@@ -15,7 +15,23 @@ router.use(authMiddleware);
  *     tags: [Chat]
  *     security:
  *       - bearerAuth: []
-...
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - receiverId
+ *               - content
+ *             properties:
+ *               receiverId:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Message sent successfully
  */
 router.post('/send', sendMessage);
 
@@ -25,7 +41,17 @@ router.post('/send', sendMessage);
  *   get:
  *     summary: Get conversation with another user
  *     tags: [Chat]
-...
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: withUserId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Conversation retrieved successfully
  */
 router.get('/conversations/:withUserId', getConversation);
 
@@ -35,7 +61,11 @@ router.get('/conversations/:withUserId', getConversation);
  *   get:
  *     summary: Get user inbox
  *     tags: [Chat]
-...
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Inbox retrieved successfully
  */
 router.get('/inbox', getInbox);
 

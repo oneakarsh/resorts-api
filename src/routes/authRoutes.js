@@ -22,6 +22,7 @@ const registerValidation = [
   check('email', 'Please include a valid email').isEmail(),
   check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 }),
   check('confirmPassword', 'Passwords do not match').custom((value, { req }) => value === req.body.password),
+  check('phone', 'Phone number is required').not().isEmpty(),
 ];
 
 const loginValidation = [
@@ -46,6 +47,7 @@ const loginValidation = [
  *               - email
  *               - password
  *               - confirmPassword
+ *               - phone
  *             properties:
  *               name:
  *                 type: string
@@ -83,8 +85,10 @@ router.post('/register', registerValidation, validate, register);
  *             properties:
  *               email:
  *                 type: string
+ *                 example: superadmin@resort.com
  *               password:
  *                 type: string
+ *                 example: password123
  *     responses:
  *       200:
  *         description: Login successful

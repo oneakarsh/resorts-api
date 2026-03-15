@@ -28,6 +28,12 @@ router.get('/super-admin', authMiddleware, superadminMiddleware, getSuperAdminSt
  *     tags: [Dashboard]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: propertyOwnerId
+ *         schema:
+ *           type: string
+ *         description: "Optional: ID of the property owner to view stats for (Super Admin only). Defaults to current user."
  *     responses:
  *       200:
  *         description: Property Owner statistics retrieved successfully
