@@ -130,8 +130,8 @@ exports.getBookingById = async (req, res) => {
     // Allow booking owner, property owner, manager or superadmin to view
     if (
       booking.userId._id.toString() !== req.userId &&
-      req.userRole !== 'property_owner' &&
-      req.userRole !== 'manager' &&
+      req.userRole !== 'resort_owner' &&
+      req.userRole !== 'resort_manager' &&
       req.userRole !== 'superadmin'
     ) {
       return res.status(403).json({ message: 'Unauthorized' });
@@ -157,8 +157,8 @@ exports.updateBookingStatus = async (req, res) => {
       return res.status(404).json({ message: 'Booking not found' });
     }
 
-    // Ownership check for property owners
-    if (req.userRole === 'property_owner' && booking.resortId.owner.toString() !== req.userId) {
+    // Ownership check for resort owners
+    if (req.userRole === 'resort_owner' && booking.resortId.owner.toString() !== req.userId) {
       return res.status(403).json({ message: 'You can only update bookings for your own resorts' });
     }
 
@@ -181,8 +181,8 @@ exports.cancelBooking = async (req, res) => {
 
     if (
       booking.userId.toString() !== req.userId &&
-      req.userRole !== 'property_owner' &&
-      req.userRole !== 'manager' &&
+      req.userRole !== 'resort_owner' &&
+      req.userRole !== 'resort_manager' &&
       req.userRole !== 'superadmin'
     ) {
       return res.status(403).json({ message: 'Unauthorized' });
@@ -205,8 +205,8 @@ exports.getAllBookings = async (req, res) => {
 
     const filter = {};
     
-    // If property owner, only show bookings for their resorts
-    if (req.userRole === 'property_owner') {
+    // If resort owner, only show bookings for their resorts
+    if (req.userRole === 'resort_owner') {
       const ownerResorts = await Resort.find({ owner: req.userId }).select('_id');
       const resortIds = ownerResorts.map(r => r._id);
       filter.resortId = { $in: resortIds };

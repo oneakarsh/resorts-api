@@ -164,7 +164,7 @@ exports.updateResort = async (req, res) => {
     }
 
     // Ownership check
-    if (req.userRole === 'property_owner' && resort.owner.toString() !== req.userId) {
+    if (req.userRole === 'resort_owner' && resort.owner.toString() !== req.userId) {
       return res.status(403).json({ message: 'You can only update your own resorts' });
     }
 
@@ -189,7 +189,7 @@ exports.deleteResort = async (req, res) => {
     }
 
     // Ownership check
-    if (req.userRole === 'property_owner' && resort.owner.toString() !== req.userId) {
+    if (req.userRole === 'resort_owner' && resort.owner.toString() !== req.userId) {
       return res.status(403).json({ message: 'You can only delete your own resorts' });
     }
 

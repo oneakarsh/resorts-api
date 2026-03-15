@@ -74,7 +74,7 @@ router.get('/:id', authMiddleware, superadminMiddleware, permissionMiddleware('m
  *                 type: string
  *               role:
  *                 type: string
- *                 enum: [user, property_owner, manager, superadmin]
+ *                 enum: [user, resort_owner, resort_manager, superadmin]
  *                 default: user
  *     responses:
  *       201:
@@ -84,7 +84,7 @@ router.post('/', authMiddleware, superadminMiddleware, permissionMiddleware('man
 
 // Middleware to allow SuperAdmin or PropertyOwner for update/delete
 const adminOrOwnerMiddleware = (req, res, next) => {
-  if (req.userRole === 'superadmin' || req.userRole === 'property_owner') {
+  if (req.userRole === 'superadmin' || req.userRole === 'resort_owner') {
     return next();
   }
   return res.status(403).json({ message: 'Access denied.' });
@@ -94,7 +94,7 @@ const adminOrOwnerMiddleware = (req, res, next) => {
  * @swagger
  * /api/users/{id}:
  *   put:
- *     summary: Update a user (Super Admin/Property Owner only)
+ *     summary: Update a user (Super Admin/Resort Owner only)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
@@ -122,8 +122,8 @@ const adminOrOwnerMiddleware = (req, res, next) => {
  *                 example: "+1234567890"
  *               role:
  *                 type: string
- *                 enum: [user, property_owner, manager, superadmin]
- *                 example: manager
+ *                 enum: [user, resort_owner, resort_manager, superadmin]
+ *                 example: resort_manager
  *               isActive:
  *                 type: boolean
  *                 example: true
@@ -137,7 +137,7 @@ router.put('/:id', authMiddleware, adminOrOwnerMiddleware, updateUser);
  * @swagger
  * /api/users/{id}:
  *   delete:
- *     summary: Delete a user (Super Admin/Property Owner only)
+ *     summary: Delete a user (Super Admin/Resort Owner only)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []

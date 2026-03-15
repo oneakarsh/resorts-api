@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 // Role-based permissions mapping
 const rolePermissions = {
   user: ['view_resorts', 'create_booking', 'view_own_booking', 'cancel_own_booking', 'send_message', 'view_own_messages'],
-  property_owner: [
+  resort_owner: [
     'view_resorts',
     'create_resort',
     'update_resort',
@@ -13,8 +13,9 @@ const rolePermissions = {
     'send_message',
     'view_own_messages',
     'manage_users',
+    'manage_resort_managers',
   ],
-  manager: [
+  resort_manager: [
     'view_resorts',
     'view_all_bookings',
     'manage_bookings',
@@ -22,6 +23,9 @@ const rolePermissions = {
     'chat_with_customers',
     'send_message',
     'view_own_messages',
+    'view_resort_facilities',
+    'manage_room_inventory',
+    'view_checkin_checkout',
   ],
   superadmin: [
     'view_resorts',
@@ -35,7 +39,7 @@ const rolePermissions = {
     'update_booking_status',
     'manage_users',
     'manage_admins',
-    'manage_property_owners',
+    'manage_resort_owners',
     'system_settings',
     'view_analytics',
     'send_message',
@@ -79,16 +83,36 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-const propertyOwnerMiddleware = (req, res, next) => {
+const resortOwnerMiddleware = (req, res, next) => {
   try {
     if (!req.userRole) {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    if (req.userRole !== 'property_owner' && req.userRole !== 'superadmin') {
+    if (req.userRole !== 'resort_owner' && req.userRole !== 'superadmin') {
       return res
         .status(403)
-        .json({ message: 'Property owner access required. Your role: ' + req.userRole });
+        .json({ message: 'Resort owner access required. Your role: ' + req.userRole });
+    }
+
+    next();
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: 'Authorization error', error: error.message });
+  }
+};
+
+const resortManagerMiddleware = (req, res, next) => {
+  try {
+    if (!req.userRole) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    if (req.userRole !== 'resort_manager' && req.userRole !== 'resort_owner' && req.userRole !== 'superadmin') {
+      return res
+        .status(403)
+        .json({ message: 'Resort manager access required. Your role: ' + req.userRole });
     }
 
     next();
@@ -144,7 +168,8 @@ const permissionMiddleware = (requiredPermission) => {
 
 module.exports = {
   authMiddleware,
-  propertyOwnerMiddleware,
+  resortOwnerMiddleware,
+  resortManagerMiddleware,
   superadminMiddleware,
   permissionMiddleware,
   rolePermissions,

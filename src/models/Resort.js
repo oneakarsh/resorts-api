@@ -68,6 +68,12 @@ const resortSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    managers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
     isActive: {
       type: Boolean,
       default: true,

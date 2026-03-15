@@ -3,8 +3,8 @@ const {
   register,
   login,
   getProfile,
-  createPropertyOwner,
-  createManager,
+  createResortOwner,
+  createResortManager,
   getAllUsers,
   refreshToken,
   forgotPassword,
@@ -192,45 +192,45 @@ router.get('/profile', authMiddleware, getProfile);
 
 /**
  * @swagger
- * /api/auth/property-owner/create:
+ * /api/auth/resort-owner/create:
  *   post:
- *     summary: Create a property owner (Super Admin only)
+ *     summary: Create a resort owner (Super Admin only)
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       201:
- *         description: Property owner created successfully
+ *         description: Resort owner created successfully
  */
-router.post('/property-owner/create', authMiddleware, superadminMiddleware, permissionMiddleware('manage_property_owners'), createPropertyOwner);
+router.post('/resort-owner/create', authMiddleware, superadminMiddleware, permissionMiddleware('manage_resort_owners'), createResortOwner);
 
-// Role-based middleware to allow both SuperAdmin and PropertyOwner
+// Role-based middleware to allow both SuperAdmin and ResortOwner
 const managerCreationMiddleware = (req, res, next) => {
-  if (req.userRole === 'superadmin' || req.userRole === 'property_owner') {
+  if (req.userRole === 'superadmin' || req.userRole === 'resort_owner') {
     return next();
   }
-  return res.status(403).json({ message: 'Access denied. Managers can only be created by SuperAdmins or Property Owners.' });
+  return res.status(403).json({ message: 'Access denied. Managers can only be created by SuperAdmins or Resort Owners.' });
 };
 
 /**
  * @swagger
- * /api/auth/manager/create:
+ * /api/auth/resort-manager/create:
  *   post:
- *     summary: Create a manager (Super Admin/Property Owner only)
+ *     summary: Create a resort manager (Super Admin/Resort Owner only)
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       201:
- *         description: Manager created successfully
+ *         description: Resort manager created successfully
  */
-router.post('/manager/create', authMiddleware, managerCreationMiddleware, createManager);
+router.post('/resort-manager/create', authMiddleware, managerCreationMiddleware, createResortManager);
 
 /**
  * @swagger
- * /api/auth/property-owner/users:
+ * /api/auth/resort-owner/users:
  *   get:
- *     summary: Get all property owners/managers (Super Admin only)
+ *     summary: Get all resort owners/managers (Super Admin only)
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
@@ -238,6 +238,6 @@ router.post('/manager/create', authMiddleware, managerCreationMiddleware, create
  *       200:
  *         description: List of users retrieved successfully
  */
-router.get('/property-owner/users', authMiddleware, superadminMiddleware, permissionMiddleware('manage_users'), getAllUsers);
+router.get('/resort-owner/users', authMiddleware, superadminMiddleware, permissionMiddleware('manage_users'), getAllUsers);
 
 module.exports = router;

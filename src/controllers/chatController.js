@@ -22,13 +22,13 @@ exports.sendMessage = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Sender not found' });
     }
 
-    // Simple role-based validation: managers/property owners chat with customers, customers can message managers/property owners
+    // Simple role-based validation: managers/resort owners chat with customers, customers can message managers/resort owners
     const allowedPair = () => {
-      if (sender.role === 'manager' || sender.role === 'property_owner') {
+      if (sender.role === 'resort_manager' || sender.role === 'resort_owner') {
         return recipient.role === 'user' || recipient.role === 'superadmin';
       }
       if (sender.role === 'user') {
-        return recipient.role === 'manager' || recipient.role === 'property_owner' || recipient.role === 'superadmin';
+        return recipient.role === 'resort_manager' || recipient.role === 'resort_owner' || recipient.role === 'superadmin';
       }
       // allow superadmin to message anyone
       if (sender.role === 'superadmin') return true;

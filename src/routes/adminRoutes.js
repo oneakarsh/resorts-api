@@ -79,7 +79,7 @@ router.get('/users/:id', getUserById);
  *                 type: string
  *               role:
  *                 type: string
- *                 enum: [user, property_owner, manager, superadmin]
+ *                 enum: [user, resort_owner, resort_manager, superadmin]
  *     responses:
  *       201:
  *         description: User created successfully
@@ -115,7 +115,7 @@ router.post('/users', createUser);
  *                 type: string
  *               role:
  *                 type: string
- *                 enum: [user, property_owner, manager, superadmin]
+ *                 enum: [user, resort_owner, resort_manager, superadmin]
  *               isActive:
  *                 type: boolean
  *     responses:

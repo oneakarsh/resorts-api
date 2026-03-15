@@ -6,7 +6,7 @@ const {
   updateResort,
   deleteResort,
 } = require('../controllers/resortController');
-const { authMiddleware, propertyOwnerMiddleware, permissionMiddleware } = require('../middleware/auth');
+const { authMiddleware, resortOwnerMiddleware, permissionMiddleware } = require('../middleware/auth');
 const { check } = require('express-validator');
 const { validate } = require('../middleware/validate');
 
@@ -57,7 +57,7 @@ router.get('/:id', getResortById);
  * @swagger
  * /api/resorts:
  *   post:
- *     summary: Create a new resort (Property Owner/Super Admin only)
+ *     summary: Create a new resort (Resort Owner/Super Admin only)
  *     tags: [Resorts]
  *     security:
  *       - bearerAuth: []
@@ -65,13 +65,13 @@ router.get('/:id', getResortById);
  *       201:
  *         description: Resort created successfully
  */
-router.post('/', authMiddleware, propertyOwnerMiddleware, permissionMiddleware('create_resort'), resortValidation, validate, createResort);
+router.post('/', authMiddleware, resortOwnerMiddleware, permissionMiddleware('create_resort'), resortValidation, validate, createResort);
 
 /**
  * @swagger
  * /api/resorts/{id}:
  *   put:
- *     summary: Update a resort (Property Owner/Super Admin only)
+ *     summary: Update a resort (Resort Owner/Super Admin only)
  *     tags: [Resorts]
  *     security:
  *       - bearerAuth: []
@@ -116,13 +116,13 @@ router.post('/', authMiddleware, propertyOwnerMiddleware, permissionMiddleware('
  *       200:
  *         description: Resort updated successfully
  */
-router.put('/:id', authMiddleware, propertyOwnerMiddleware, permissionMiddleware('update_resort'), resortValidation, validate, updateResort);
+router.put('/:id', authMiddleware, resortOwnerMiddleware, permissionMiddleware('update_resort'), resortValidation, validate, updateResort);
 
 /**
  * @swagger
  * /api/resorts/{id}:
  *   delete:
- *     summary: Delete a resort (Property Owner/Super Admin only)
+ *     summary: Delete a resort (Resort Owner/Super Admin only)
  *     tags: [Resorts]
  *     security:
  *       - bearerAuth: []
@@ -136,6 +136,6 @@ router.put('/:id', authMiddleware, propertyOwnerMiddleware, permissionMiddleware
  *       200:
  *         description: Resort deleted successfully
  */
-router.delete('/:id', authMiddleware, propertyOwnerMiddleware, permissionMiddleware('delete_resort'), deleteResort);
+router.delete('/:id', authMiddleware, resortOwnerMiddleware, permissionMiddleware('delete_resort'), deleteResort);
 
 module.exports = router;

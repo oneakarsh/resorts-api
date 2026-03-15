@@ -253,7 +253,7 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-exports.createPropertyOwner = async (req, res) => {
+exports.createResortOwner = async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
 
@@ -277,7 +277,7 @@ exports.createPropertyOwner = async (req, res) => {
       email,
       password,
       phone,
-      role: 'property_owner',
+      role: 'resort_owner',
       createdBy: req.userId,
     });
 
@@ -285,7 +285,7 @@ exports.createPropertyOwner = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Property owner created successfully',
+      message: 'Resort owner created successfully',
       owner: {
         id: owner._id,
         name: owner.name,
@@ -294,17 +294,17 @@ exports.createPropertyOwner = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Property owner creation error:', error);
+    console.error('Resort owner creation error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create property owner',
+      message: 'Failed to create resort owner',
       error: error.message,
     });
   }
 };
 
-// Create a manager (SuperAdmin only) that can manage bookings and chat with customers
-exports.createManager = async (req, res) => {
+// Create a resort manager (SuperAdmin or ResortOwner) that can manage bookings and chat with customers
+exports.createResortManager = async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
 
@@ -328,7 +328,7 @@ exports.createManager = async (req, res) => {
       email,
       password,
       phone,
-      role: 'manager',
+      role: 'resort_manager',
       createdBy: req.userId,
     });
 
@@ -336,7 +336,7 @@ exports.createManager = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Manager created successfully',
+      message: 'Resort manager created successfully',
       manager: {
         id: manager._id,
         name: manager.name,
@@ -345,10 +345,10 @@ exports.createManager = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Manager creation error:', error);
+    console.error('Resort manager creation error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create manager',
+      message: 'Failed to create resort manager',
       error: error.message,
     });
   }
@@ -356,10 +356,10 @@ exports.createManager = async (req, res) => {
 
 exports.getAllUsers = async (req, res) => {
   try {
-    // Only fetch property owners and managers
+    // Only fetch resort owners and managers
     const users = await User.find({ 
       isActive: true,
-      role: { $in: ['property_owner', 'manager'] }
+      role: { $in: ['resort_owner', 'resort_manager'] }
     });
 
     res.json({
