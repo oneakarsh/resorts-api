@@ -10,6 +10,10 @@ const chatRoutes = require('./src/routes/chatRoutes');
 const dashboardRoutes = require('./src/routes/dashboardRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
 const managementRoutes = require('./src/routes/managementRoutes');
+const analyticsRoutes = require('./src/routes/analytics.routes');
+const reviewRoutes = require('./src/routes/review.routes');
+const roomRoutes = require('./src/routes/room.routes');
+const superadminRoutes = require('./src/routes/superadmin.routes');
 
 const { swaggerUi, specs } = require('./src/config/swagger');
 const rateLimit = require('express-rate-limit');
@@ -48,6 +52,10 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/management', managementRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/rooms', roomRoutes);
+app.use('/api/superadmin', superadminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
