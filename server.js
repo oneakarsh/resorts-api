@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const connectDB = require('./src/config/database');
 require('dotenv').config();
 const authRoutes = require('./src/routes/authRoutes');
@@ -20,14 +21,40 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 
+// Set trust proxy so express-rate-limit respects the client's IP instead of Render's proxy IP
+app.set('trust proxy', 1);
+
 // Connect to MongoDB
 connectDB();
 
-// Middleware
-app.use(cors());
+// Security: HTTP headers hardening
+app.use(helmet());
+
+// CORS Configuration
+// For Vercel/Render deployments, we check ALLOWED_ORIGINS but also fallback gracefully to allow the Vercel URL if needed.
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:3000', 'https://resortsui1-4nfkfe5n9-arvind301024-3878s-projects.vercel.app'];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    
+    // Check if origin matches any of the allowed origins or if it's a Vercel preview URL
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
+
+
 app.use(express.json());
 const morgan = require('morgan');
 app.use(morgan('dev'));
+
 
 // Rate Limiting
 const limiter = rateLimit({
