@@ -21,9 +21,9 @@ const getSuperAdminStats = async (req, res) => {
     ]);
 
     res.json({
-      resorts: totalResorts,
-      bookings: totalBookings,
-      users: totalUsers,
+      totalResorts,
+      totalBookings,
+      totalUsers,
       usersByRole,
       bookingsByStatus,
       totalRevenue: totalRevenue.length > 0 ? totalRevenue[0].total : 0
@@ -52,11 +52,12 @@ const getPropertyOwnerStats = async (req, res) => {
     if (resortIds.length === 0) {
       return res.json({
         ownerId,
-        resorts: 0,
-        bookings: 0,
+        totalResorts: 0,
+        totalBookings: 0,
         bookingsByStatus: [],
         totalRevenue: 0,
-        resortList: []
+        resortList: [],
+        recentBookings: []
       });
     }
 
@@ -74,13 +75,29 @@ const getPropertyOwnerStats = async (req, res) => {
       { $group: { _id: null, total: { $sum: '$totalPrice' } } }
     ]);
 
+    // Fetch recent bookings with resort and user info
+    const recentBookings = await Booking.find({ resortId: { $in: resortIds } })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate('userId', 'name')
+      .populate('resortId', 'name');
+
     res.json({
       ownerId,
-      resorts: ownerResorts.length,
-      bookings: totalBookings,
+      totalResorts: ownerResorts.length,
+      totalBookings,
       bookingsByStatus,
       totalRevenue: totalRevenue.length > 0 ? totalRevenue[0].total : 0,
-      resortList: ownerResorts.map(r => ({ id: r._id, name: r.name }))
+      resortList: ownerResorts.map(r => ({ id: r._id, name: r.name })),
+      recentBookings: recentBookings.map(b => ({
+        id: b._id,
+        resortName: b.resortId?.name || 'Deleted Resort',
+        userName: b.userId?.name || 'Unknown User',
+        totalPrice: b.totalPrice,
+        status: b.status,
+        checkInDate: b.checkInDate,
+        checkOutDate: b.checkOutDate
+      }))
     });
   } catch (error) {
     console.error('Property Owner Stats Error:', error);
