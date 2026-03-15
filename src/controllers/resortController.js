@@ -64,6 +64,22 @@ exports.getAllResorts = async (req, res) => {
       }
     }
 
+    const { category } = req.query;
+    if (category) {
+      const catRegex = new RegExp(category.replace(/[^a-zA-Z0-9 ]/g, ""), 'i');
+      filter.$or = [
+        { amenities: { $regex: catRegex } },
+        { location: { $regex: catRegex } },
+        { description: { $regex: catRegex } },
+        { name: { $regex: catRegex } },
+        // Add specific mappings for common categories if needed
+        ...(category.toLowerCase() === 'beachfront' ? [{ amenities: { $regex: /beach/i } }, { description: { $regex: /beach/i } }] : []),
+        ...(category.toLowerCase() === 'mountains' ? [{ amenities: { $regex: /ski|mountain|hill|glacier|alpine/i } }, { location: { $regex: /switzerland|patagonia/i } }] : []),
+        ...(category.toLowerCase() === 'amazing pools' ? [{ amenities: { $regex: /pool/i } }] : []),
+        ...(category.toLowerCase() === 'luxury' ? [{ pricePerNight: { $gt: 10000 } }, { amenities: { $regex: /luxury/i } }] : [])
+      ];
+    }
+
     if (minRate || maxRate) {
       const priceFilter = {};
       if (minRate && !Number.isNaN(Number(minRate))) priceFilter.$gte = Number(minRate);
