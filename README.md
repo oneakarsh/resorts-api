@@ -1,4 +1,4 @@
-# Resort Booking System API
+### Resort Booking System API
 
 A complete Express.js API for a resort booking system with MongoDB integration, JWT authentication, and admin functionality.
 
